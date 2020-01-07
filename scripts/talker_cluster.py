@@ -6,7 +6,7 @@ from std_msgs.msg import String
 def talker():
     pub = rospy.Publisher('chatter_cluster', String, queue_size=10)
     rospy.init_node('talker_cluster', anonymous=True)
-    rate = rospy.Rate(1) # 1hz
+    rate = rospy.Rate(0.5) #hz
     while not rospy.is_shutdown():
         
 

@@ -49,7 +49,7 @@ def callback(data):
 
         # calculate function
         function = np.polyfit(points[:, 1], points[:, 0], poly_degree)
-
+        
         # print all points of function line
         for i in range(int(cluster_y_value_min), int(cluster_y_value_max)):
             cv2.circle(canvas, (int(np.polyval(function, i)), i), 1, (0, 0, 0), -1)
@@ -60,10 +60,11 @@ def callback(data):
         # cv2.line(canvas, (int(function_start_point), cluster_x_value_min) , (int(function_end_point), cluster_x_value_max),(0, 0, 0) , 1)
 
         # function string (polydegree, start point, end point)
-        print(str(poly_degree) + "," + str(int(function_start_point)) + "," + str(cluster_y_value_min) + "," + str(int(function_end_point)) + "," + str(cluster_y_value_max))
+        data_function = (str(poly_degree) + "," + str(int(function_start_point)) + "," + str(cluster_y_value_min) + "," + str(int(function_end_point)) + "," + str(cluster_y_value_max))
+        talker(data_function)
 
     cv2.imshow("points", canvas)
-    cv2.waitKey(1000)
+    cv2.waitKey(2000)
     cv2.destroyAllWindows()
 
     
@@ -80,6 +81,15 @@ def listener():
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
+
+def talker(data_function):
+    pub = rospy.Publisher('chatter_function', String, queue_size=10)
+    # rospy.init_node('talker_function', anonymous=True)
+    rate = rospy.Rate(100) #hz
+    if not rospy.is_shutdown():
+        rospy.loginfo(data_function)
+        pub.publish(data_function)
+        rate.sleep()
 
 if __name__ == '__main__':
     listener()
