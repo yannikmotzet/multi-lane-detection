@@ -208,3 +208,7 @@ include_directories(
 add_executable(talker src/talker.cpp)
 target_link_libraries(talker ${catkin_LIBRARIES})
 add_dependencies(talker laneregression_generate_messages_cpp)
+
+add_executable(talker_lanedetection src/talker_lanedetection.cpp)
+target_link_libraries(talker_lanedetection ${catkin_LIBRARIES})
+add_dependencies(talker_lanedetection laneregression_generate_messages_cpp)
