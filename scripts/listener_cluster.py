@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+import rospy
+from std_msgs.msg import String
 import numpy as np
 import cv2
 import random
@@ -5,6 +8,7 @@ import random
 picHeight = 960
 picWidth = 1280
 poly_degree = 2
+canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
 
 
 def print_circles(points):
@@ -12,13 +16,13 @@ def print_circles(points):
     for i in range (int(points.size / 2)):              # size ergibt sich aus x + y --> besser machen
         cv2.circle(canvas, (points[i, 0], points[i, 1]), 1,(r, g, b), -1)
 
+def callback(data):
+    # rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
 
-# clusters
-file = open("all_cluster", "r")
-for line in file:
-    # white canvas
+    # clusters
+    global canvas 
     canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
-    cluster = line.split(";")
+    cluster = data.data.split(";")
     # go through clusters
     for n in range(len(cluster) - 1):
         fields = cluster[n].split(",")
@@ -38,6 +42,7 @@ for line in file:
                     cluster_y_value_min = int(fields[i])
                 elif int(fields[i]) > cluster_y_value_max:
                     cluster_y_value_max = int(fields[i])
+
         # convert string to int
         points = points.astype(int)
         print_circles(points)
@@ -58,7 +63,23 @@ for line in file:
         print(str(poly_degree) + "," + str(int(function_start_point)) + "," + str(cluster_y_value_min) + "," + str(int(function_end_point)) + "," + str(cluster_y_value_max))
 
     cv2.imshow("points", canvas)
-    cv2.waitKey(0)
+    cv2.waitKey(1000)
     cv2.destroyAllWindows()
 
-file.close()
+    
+def listener():
+
+    # In ROS, nodes are uniquely named. If two nodes with the same
+    # name are launched, the previous one is kicked off. The
+    # anonymous=True flag means that rospy will choose a unique
+    # name for our 'listener' node so that multiple listeners can
+    # run simultaneously.
+    rospy.init_node('listener_cluster', anonymous=True)
+
+    rospy.Subscriber("chatter_cluster", String, callback)
+
+    # spin() simply keeps python from exiting until this node is stopped
+    rospy.spin()
+
+if __name__ == '__main__':
+    listener()
