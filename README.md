@@ -1,4 +1,4 @@
-attention: manual not finished yet!
+attention: manual not tested yet!
 
 ## How to clone
 * clone in your ROS workspace: ``` ~/catkin_ws/scr/ ```
