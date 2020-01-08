@@ -7,8 +7,9 @@ import random
 
 picHeight = 960
 picWidth = 1280
-poly_degree = 2
+poly_degree = 1
 canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
+data_function_collected = ""
 
 
 def print_circles(points):
@@ -22,6 +23,7 @@ def callback(data):
     # clusters
     global canvas 
     canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
+    message = ""
     cluster = data.data.split(";")
     # go through clusters
     for n in range(len(cluster) - 1):
@@ -60,9 +62,10 @@ def callback(data):
         # cv2.line(canvas, (int(function_start_point), cluster_x_value_min) , (int(function_end_point), cluster_x_value_max),(0, 0, 0) , 1)
 
         # function string (polydegree, start point, end point)
-        data_function = (str(poly_degree) + "," + str(int(function_start_point)) + "," + str(cluster_y_value_min) + "," + str(int(function_end_point)) + "," + str(cluster_y_value_max))
-        talker(data_function)
-
+        function_string = (str(int(function_start_point)) + ":" + str(cluster_y_value_min) + "," + str(int(function_end_point)) + ":" + str(cluster_y_value_max) + ";")
+        message = message + function_string
+        
+    talker(str(poly_degree) + ";" + message)
     cv2.imshow("points", canvas)
     cv2.waitKey(2000)
     cv2.destroyAllWindows()
@@ -75,7 +78,7 @@ def listener():
     # anonymous=True flag means that rospy will choose a unique
     # name for our 'listener' node so that multiple listeners can
     # run simultaneously.
-    rospy.init_node('listener_cluster', anonymous=True)
+    rospy.init_node('laneregression', anonymous=True)
 
     rospy.Subscriber("chatter_cluster", String, callback)
 
