@@ -17,6 +17,25 @@ def print_circles(points):
     for i in range (int(points.size / 2)):              # size ergibt sich aus x + y --> besser machen
         cv2.circle(canvas, (points[i, 0], points[i, 1]), 1,(r, g, b), -1)
 
+def perspective_transformation():
+    global canvas
+    #illustrate vertices for perspective transformation
+    #point top left
+    cv2.circle(canvas, (400, 0), 5, (255, 0, 0), -1)
+    #point top right
+    cv2.circle(canvas, (picWidth-400, 0), 5, (0, 255, 0), -1)
+    #point bottom left
+    cv2.circle(canvas, (50, picHeight), 5, (255, 0, 0), -1)
+    #point bottom right
+    cv2.circle(canvas, (picWidth-50, picHeight), 5, (0, 0, 255), -1)
+
+    #perspective transformation
+    pts1 = np.float32([[400, 0], [picWidth-400, 0], [0, picHeight], [picWidth, picHeight]])
+    pts2 = np.float32([[0, 0], [picWidth, 0], [400, picHeight], [picWidth-400, picHeight]])
+    matrix = cv2.getPerspectiveTransform(pts1, pts2)
+ 
+    canvas = cv2.warpPerspective(canvas, matrix, (picWidth, picHeight))
+
 def callback(data):
     # rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
 
@@ -66,6 +85,7 @@ def callback(data):
         message = message + function_string
         
     talker(str(poly_degree) + ";" + message)
+    # perspective_transformation()
     cv2.imshow("points", canvas)
     cv2.waitKey(2000)
     cv2.destroyAllWindows()

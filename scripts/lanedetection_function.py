@@ -12,8 +12,6 @@ def print_circles(points):
     for i in range (int(points.size / 2)):              # size ergibt sich aus x + y --> besser machen
         cv2.circle(canvas, (points[i, 0], points[i, 1]), 1,(r, g, b), -1)
 
-
-# clusters
 file = open("all_cluster", "r")
 for line in file:
     # white canvas
