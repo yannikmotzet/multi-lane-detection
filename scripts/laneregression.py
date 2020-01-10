@@ -8,14 +8,15 @@ import math
 
 picHeight = 960
 picWidth = 1280
-poly_degree = 1
+poly_degree = 2
 canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
 data_function_collected = ""
 
 
-def print_circles(points):
-    r, g, b = random.randint(0, 255), random.randint(
-        0, 255), random.randint(0, 255)
+def draw_circles(points):
+    # r, g, b = random.randint(0, 255), random.randint(
+        # 0, 255), random.randint(0, 255)
+    r, g, b = 0, 0, 0
     # size ergibt sich aus x + y --> besser machen
     for i in range(int(points.size / 2)):
         cv2.circle(canvas, (points[i, 0], points[i, 1]), 1, (r, g, b), -1)
@@ -26,28 +27,28 @@ def calcluate_distance_between_points(x1, y1, x2, y2):
     y_diff = y2 - y1
     return math.sqrt(x_diff**2 + y_diff**2)
 
+def sort_function_points(function_points):
+    number_of_points = int(function_points.size / 2)
+    function_points = np.reshape(function_points, (number_of_points, 2))
+    # https://stackoverflow.com/questions/2828059/sorting-arrays-in-numpy-by-column?noredirect=1&lq=1
+    # function_points = np.sort(function_points.view('i4,i4'), order=['f1','f0'], axis=0).view(np.int)
+    function_points.view('i4,i4').sort(order=['f1','f0'], axis=0)
+    return function_points
 
-def perspective_transformation():
-    global canvas
-    # illustrate vertices for perspective transformation
-    # point top left
-    cv2.circle(canvas, (400, 0), 5, (255, 0, 0), -1)
-    # point top right
-    cv2.circle(canvas, (picWidth-400, 0), 5, (0, 255, 0), -1)
-    # point bottom left
-    cv2.circle(canvas, (50, picHeight), 5, (255, 0, 0), -1)
-    # point bottom right
-    cv2.circle(canvas, (picWidth-50, picHeight), 5, (0, 0, 255), -1)
+def build_function(function_points_sorted):
+    number_of_points = int(function_points_sorted.size / 2)
+    value_table = np.zeros((number_of_points, 3))
+    value_table[:, 1:] = function_points_sorted
+    value_table[0, 0] = 0
+    for i in range(1, number_of_points):
+        value_table[i, 0] = value_table[i-1, 0] + calcluate_distance_between_points(value_table[i, 1], value_table[i, 2], value_table[i-1, 1], value_table[i-1, 2])
+    # regression for x
+    x_function = np.polyfit(value_table[:, 0], value_table[:, 1], poly_degree)
+    # regression for y
+    y_function = np.polyfit(value_table[:, 0], value_table[:, 2], poly_degree)
+    return [x_function, y_function]
 
-    # perspective transformation
-    pts1 = np.float32([[400, 0], [picWidth-400, 0],
-                       [0, picHeight], [picWidth, picHeight]])
-    pts2 = np.float32(
-        [[0, 0], [picWidth, 0], [400, picHeight], [picWidth-400, picHeight]])
-    matrix = cv2.getPerspectiveTransform(pts1, pts2)
-
-    canvas = cv2.warpPerspective(canvas, matrix, (picWidth, picHeight))
-
+    
 
 def callback(data):
     # rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
@@ -59,7 +60,6 @@ def callback(data):
 
     cluster = data.data.split(";")
     number_of_cluster = len(cluster) - 1
-    function_list = np.zeros((2, 2, number_of_cluster))
 
     # go through clusters
     for n in range(number_of_cluster):
@@ -77,62 +77,39 @@ def callback(data):
             # y-value
             else:
                 points[(int((i-1)/2)), 1] = fields[i]
-                # find min und max y-value
-                if int(fields[i]) < cluster_y_value_min:
-                    cluster_y_value_min = int(fields[i])
-                elif int(fields[i]) > cluster_y_value_max:
-                    cluster_y_value_max = int(fields[i])
 
         # convert string to int
         points = points.astype(int)
         # draw points on canvas
-        print_circles(points)
-
-        # calculate function (y, x)
-        function = np.polyfit(points[:, 1], points[:, 0], poly_degree)
-
-        # # draw all points of function line (y, x)
-        # for i in range(int(cluster_y_value_min), int(cluster_y_value_max)):
-        #     cv2.circle(canvas, (int(np.polyval(function, i)), i), 1, (0, 0, 0), -1)
-
-        # print line from start to end point of function
-        function_start_point = np.polyval(function, cluster_y_value_min)
-        function_end_point = np.polyval(function, cluster_y_value_max)
-        # cv2.line(canvas, (int(function_start_point), cluster_y_value_min) , (int(function_end_point), cluster_y_value_max),(0, 0, 0) , 1)
-
-        # append to function list
-        function_list[0, 0, n] = int(function_start_point)
-        function_list[0, 1, n] = int(cluster_y_value_min)
-        function_list[1, 0, n] = int(function_end_point)
-        function_list[1, 1, n] = int(cluster_y_value_max)
-        function_list = function_list.astype(int)
+        draw_circles(points)
 
         # build function string for message (polydegree, start point, end point)
-        function_string = (str(int(function_start_point)) + ":" + str(cluster_y_value_min) +
-                           "," + str(int(function_end_point)) + ":" + str(cluster_y_value_max) + ";")
+        function_string = "hello"
         message = message + function_string
 
-    # look for dashed lines
-    distance_treshold = 200
-    function_list_dashed = np.zeros((number_of_cluster))
-    for i in range(number_of_cluster):
-        for k in range(number_of_cluster):
-            # check for y-distance of end, start and length
-            if (function_list[1,1,i] - function_list[0,1,k]) < 80 and (calcluate_distance_between_points(function_list[1, 0, i], function_list[0, 0, i], function_list[1, 1, i], function_list[0, 1, i])) < 400:
-                function_list_dashed[i] = 1
-                function_list_dashed[k] = 1
 
 
-    # draw functions
-    for i in range(number_of_cluster):
-        if function_list_dashed[i] == 0:
-            cv2.line(canvas, (function_list[0, 0, i], function_list[0, 1, i]), (
-                function_list[1, 0, i], function_list[1, 1, i]), (0, 0, 0), 1)
-        # else:
-        #     cv2.line(canvas, (function_list[0, 0, i], function_list[0, 1, i]), (
-        #         function_list[1, 0, i], function_list[1, 1, i]), (255, 0, 0), 1)
 
-    talker(str(poly_degree) + ";" + message)
+        function_points = cv2.approxPolyDP(points, 2, False)
+        cv2.drawContours(canvas, function_points, -1, (0, 0, 255), 5)
+
+        function_points_sorted = sort_function_points(function_points)
+        function = build_function(function_points_sorted)
+
+        for i in range(0, 1500, 2):
+            x = np.polyval(function[0], i)
+            y = np.polyval(function[1], i)
+            cv2.circle(canvas, (int(x), int(y)), 1, (0, 255, 0), -1)
+
+
+        print(function_points)
+        # print(function_points.shape)
+        print(sort_function_points(function_points))
+
+
+
+
+    # talker(str(poly_degree) + ";" + message)
     # perspective_transformation()
     cv2.imshow("points", canvas)
     cv2.waitKey(8000)
