@@ -10,6 +10,7 @@ attention: manual not tested yet!
 ## How to run
 start roscore master:
 * ``` ~/catkin_ws$: roscore ```
+
 for each step open new terminal and paste ``` source ./devel/setup.bash ```
 * ``` ~/catkin_ws$: rosrun lane-regression talker_cluster.py ``` (talker simuates interface to LaneDetection)
 * ``` ~/catkin_ws$: rosrun lane-regression laneregressionr.py ```  (main node)
