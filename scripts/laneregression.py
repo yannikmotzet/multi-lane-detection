@@ -60,7 +60,6 @@ def determine_cluster_start_end_points (cluster_with_points, number_of_cluster):
 
 # to do: mehrere linien erkenne, if abfrage besser machen
 def determine_dashed_lines_cluster(cluster_only_dashed):
-    print(len(cluster_only_dashed))
     cluster_dashed_lines = []
     for i in range(len(cluster_only_dashed)):
         if i == 0:
@@ -74,7 +73,7 @@ def determine_dashed_lines_cluster(cluster_only_dashed):
     return cluster_dashed_lines
 
 def determine_cluster_with_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points):
-    cluster_without_dashed_lines = []
+    cluster_only_solid_lines = []
     cluster_only_dashed_lines = []
     x_diff_treshold = 35
     y_diff_treshold = 350
@@ -92,16 +91,29 @@ def determine_cluster_with_dashed_lines(cluster_with_points, number_of_cluster, 
             if (x_diff_end_start < x_diff_treshold and y_diff_end_start < y_diff_treshold):
                 is_dashed = True
         if is_dashed == False:
-            cluster_without_dashed_lines.append(cluster_with_points[i])
-        else:
+            cluster_only_solid_lines.append(cluster_with_points[i])
+        elif is_dashed == True:
             cluster_only_dashed_lines.append(cluster_with_points[i])
+
+    # append dashed line cluster to solid line cluster
+    if not len(cluster_only_dashed_lines) == 0:
+        cluster_dashed_lines = []
+        # FEHLER, cluster_only_dashed_lines[0] ist anscheinend kein np.array
+        cluster_dashed_lines.append(cluster_only_dashed_lines[0])
+        for i in range(1, len(cluster_only_dashed_lines), 1):
+            a = cluster_dashed_lines[0]
+            b = cluster_only_dashed_lines[i]
+            cluster_dashed_lines[0] = np.concatenate((a, b))
+
+        cluster_only_solid_lines.append(cluster_dashed_lines[0])
+
+        return cluster_only_solid_lines
 
     # dashed_lines_cluster = determine_dashed_lines_cluster(cluster_only_dashed_lines)
     # cluster_with_dashed_lines = cluster_without_dashed_lines.append(dashed_lines_cluster)
-    # return cluster_with_dashed_lines
-    return cluster_without_dashed_lines, cluster_only_dashed_lines
+    return cluster_only_solid_lines
 
-                
+         
 
 def sort_function_points(function_points):
     number_of_points = int(function_points.size / 2)
@@ -197,7 +209,7 @@ def callback(data):
         cv2.circle(canvas, (int(cluster_start_end_points[1, 0, b]), int(cluster_start_end_points[1, 1, b])), 5, (255, 0, 0), -1)
 
     # find cluster with dashed lines
-    cluster_with_dashed_lines, test = determine_cluster_with_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points)
+    cluster_with_dashed_lines = determine_cluster_with_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points)
     
     # find function for cluster
     for c in range(int(len(cluster_with_dashed_lines))):
@@ -214,20 +226,20 @@ def callback(data):
             y = np.polyval(function[1], i)
             cv2.circle(canvas, (int(x), int(y)), 1, (0, 255, 0), -1)
     
-    # finc function for dashed lines cluster
-    for c in range(int(len(test))):
-        # determine function of curves
-        function_points = cv2.approxPolyDP(test[c], 2, False)
-        cv2.drawContours(canvas, function_points, -1, (0, 0, 255), 5)
+    # # finc function for dashed lines cluster
+    # for c in range(int(len(test))):
+    #     # determine function of curves
+    #     function_points = cv2.approxPolyDP(test[c], 2, False)
+    #     cv2.drawContours(canvas, function_points, -1, (0, 0, 255), 5)
 
-        function_points_sorted = sort_function_points(function_points)
-        function = build_function(function_points_sorted)
+    #     function_points_sorted = sort_function_points(function_points)
+    #     function = build_function(function_points_sorted)
 
-        # draw function
-        for i in range(0, 1500, 2):                             # to-do: set proper end point
-            x = np.polyval(function[0], i)
-            y = np.polyval(function[1], i)
-            cv2.circle(canvas, (int(x), int(y)), 1, (0, 0, 255), -1)
+    #     # draw function
+    #     for i in range(0, 1500, 2):                             # to-do: set proper end point
+    #         x = np.polyval(function[0], i)
+    #         y = np.polyval(function[1], i)
+    #         cv2.circle(canvas, (int(x), int(y)), 1, (0, 0, 255), -1)
 
 
     # talker(str(poly_degree) + ";" + message)
