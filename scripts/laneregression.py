@@ -229,6 +229,7 @@ def callback(data):
 
     # display canvas window
     cv2.imshow("points", canvas)
+    # cv2.imwrite('result.jpg', canvas)
     cv2.waitKey(8000)
     cv2.destroyAllWindows()
 
