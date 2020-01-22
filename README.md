@@ -1,4 +1,4 @@
-attention: manual not tested yet!
+attention: manual not tested yet! (on test system it is working)
 
 ## How to clone
 * clone in your ROS workspace: ``` ~/catkin_ws/scr/ ```
@@ -12,6 +12,6 @@ start roscore master:
 * ``` ~/catkin_ws$: roscore ```
 
 for each step open new terminal and paste ``` source ./devel/setup.bash ```
-* ``` ~/catkin_ws/src/laneregression$: rosrun lane-regression talker_cluster.py ``` (talker simuates interface to LaneDetection)
-* ``` rosrun lane-regression laneregressionr.py ```  (main node)
-* ``` rosrun lane-regression listener_laneassist_dummy.py ``` (listener simulates interface to LaneAssist)
+* ``` ~/catkin_ws/src/lane-regression$: rosrun lane-regression talker_cluster.py ``` (talker simuates interface from LaneDetection)
+* ``` ~/catkin_ws$: rosrun lane-regression laneregressionr.py ```  (main node)
+* ``` ~/catkin_ws$: rosrun lane-regression listener_laneassist_dummy.py ``` (listener simulates interface to LaneAssist)
