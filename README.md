@@ -15,3 +15,7 @@ for each step open new terminal and paste ``` source ./devel/setup.bash ```
 * ``` ~/catkin_ws/src/lane-regression$: rosrun lane-regression talker_cluster.py ``` (talker simuates interface from LaneDetection)
 * ``` ~/catkin_ws$: rosrun lane-regression laneregressionr.py ```  (main node)
 * ``` ~/catkin_ws$: rosrun lane-regression listener_laneassist_dummy.py ``` (listener simulates interface to LaneAssist)
+* 
+
+## Result example
+![result](result.jpg)
