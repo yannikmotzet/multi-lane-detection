@@ -197,7 +197,7 @@ def callback(data):
         # start point
         cv2.circle(canvas, (int(cluster_start_end_points[0, 0, b]), int(cluster_start_end_points[0, 1, b])), 5, (255, 0, 0), -1)
         # end point
-        cv2.circle(canvas, (int(cluster_start_end_points[1, 0, b]), int(cluster_start_end_points[1, 1, b])), 5, (255, 0, 0), -1)
+        cv2.circle(canvas, (int(cluster_start_end_points[1message_data, 0, b]), int(cluster_start_end_points[1, 1, b])), 5, (255, 0, 0), -1)
 
     # find cluster with solid lines + dashed lines
     cluster_with_dashed_lines = determine_cluster_with_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points)
@@ -210,7 +210,7 @@ def callback(data):
 
         # put the points in order
         function_points_sorted = sort_function_points(function_points)
-        # get x(t) and y(t)
+        # get x(t) and y(t), function is list, function[0] contains parameters for x(t), function[1] for y(t)
         function = build_function(function_points_sorted)
 
         # draw function
@@ -220,12 +220,18 @@ def callback(data):
             y = np.polyval(function[1], i)
             cv2.circle(canvas, (int(x), int(y)), 1, (0, 255, 0), -1)
 
-        # build message 
-        # function_string = "hello"
-        # message = message + function_string
+        # build message
+        x_t, y_t = "", ""
+        for p in range(len(function[0])):
+            x_t = x_t + str(function[0][p]) + ", "
+            y_t = y_t + str(function[1][p]) + ", "
+        # function_string = "x(t)= " + x_t +"; y(t)= " + y_t + "| \n "
+        function_string = x_t + ";" + y_t + "|"
+
+        message = message + function_string
     
-    # TODO: send a message via ROS topic
-    # talker(message)
+    # send a message via ROS topic
+    talker(message)
 
     # display canvas window
     cv2.imshow("points", canvas)

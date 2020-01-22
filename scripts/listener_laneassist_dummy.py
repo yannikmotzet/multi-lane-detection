@@ -5,8 +5,8 @@ from std_msgs.msg import String
 def callback(data):
     # rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
 
-    message_data = data.data.split(";")
-    log_message = "I recived " + str(int(len(message_data) - 2)) + " polynomial(s) with degree " + str(message_data[0]) + ". These are the start and end points: " + str(message_data[1 : int(len(message_data) - 1)])
+    message_data = data.data.split("|")
+    log_message = "I recived " + str(int(len(message_data) - 1)) + " polynomial(s): \n" +  str(message_data[0 : int(len(message_data) - 1)])
     rospy.loginfo(log_message)
     
 def listener():
