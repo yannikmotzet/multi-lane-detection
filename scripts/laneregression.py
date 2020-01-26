@@ -7,7 +7,7 @@ import random
 import math
 
 __author__ = 'Yannik Motzet'
-__copyright__ = 'Copyright 2020, ZF Innovation Lab'
+__copyright__ = 'Copyright 2020, ZF DHBW Innovation Lab'
 __version__ = '0.1.0'
 __email__ = 'yannik.motzet@outlook.com'
 __status__ = 'in development'
@@ -21,9 +21,9 @@ data_function_collected = ""
 
 
 def draw_circles(points):
-    # r, g, b = random.randint(0, 255), random.randint(
-        # 0, 255), random.randint(0, 255)
-    r, g, b = 0, 0, 0
+    r, g, b = random.randint(0, 255), random.randint(
+        0, 255), random.randint(0, 255)
+    # r, g, b = 0, 0, 0
     for i in range(int(points.size / 2)):
         cv2.circle(canvas, (points[i, 0], points[i, 1]), 1, (r, g, b), -1)
 
@@ -82,8 +82,8 @@ def determine_dashed_lines_cluster(cluster_only_dashed):
         return None
 
 
-# takes all cluster and only returns cluster with dashed lines
-def determine_cluster_with_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points):
+# takes all cluster and returns cluster with solid and dashed lines
+def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points):
     cluster_only_solid_lines = []
     cluster_only_dashed_lines = []
     x_diff_treshold = 35
@@ -185,10 +185,6 @@ def callback(data):
         # draw point cloud of current raw cluster on canvas
         draw_circles(points)
 
-        # # build function string for message (polydegree, start point, end point)
-        # function_string = "hello"
-        # message = message + function_string
-
 
     # find start and end points of cluster
     cluster_start_end_points = determine_cluster_start_end_points(cluster_with_points, number_of_cluster)
@@ -197,15 +193,19 @@ def callback(data):
         # start point
         cv2.circle(canvas, (int(cluster_start_end_points[0, 0, b]), int(cluster_start_end_points[0, 1, b])), 5, (255, 0, 0), -1)
         # end point
-        cv2.circle(canvas, (int(cluster_start_end_points[1message_data, 0, b]), int(cluster_start_end_points[1, 1, b])), 5, (255, 0, 0), -1)
+        cv2.circle(canvas, (int(cluster_start_end_points[1, 0, b]), int(cluster_start_end_points[1, 1, b])), 5, (255, 0, 0), -1)
 
     # find cluster with solid lines + dashed lines
-    cluster_with_dashed_lines = determine_cluster_with_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points)
+    cluster_with_solid_and_dashed_lines = determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points)
+
+    # draw new cluster with solid lines + dashed lines on canvas
+    # for u in range(int(len(cluster_with_solid_and_dashed_lines))):
+    #     draw_circles(cluster_with_solid_and_dashed_lines[u])
     
     # find function for each line
-    for c in range(int(len(cluster_with_dashed_lines))):
+    for c in range(int(len(cluster_with_solid_and_dashed_lines))):
         # determine some points of cluster with Ramer-Douglas-Peucker algorithm
-        function_points = cv2.approxPolyDP(cluster_with_dashed_lines[c], 2, False)
+        function_points = cv2.approxPolyDP(cluster_with_solid_and_dashed_lines[c], 2, False)
         cv2.drawContours(canvas, function_points, -1, (0, 0, 255), 5)
 
         # put the points in order
@@ -235,7 +235,7 @@ def callback(data):
 
     # display canvas window
     cv2.imshow("points", canvas)
-    # cv2.imwrite('result.jpg', canvas)
+    # cv2.imwrite('new_clusters.png', canvas)
     cv2.waitKey(8000)
     cv2.destroyAllWindows()
 
