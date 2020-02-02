@@ -82,12 +82,16 @@ def determine_dashed_lines_cluster(cluster_only_dashed):
         return None
 
 
-# takes all cluster and returns cluster with solid and dashed lines
+# takes all cluster and returns cluster with solid and dashed lines (datatype of return in list with np array as items)
 def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points):
     cluster_only_solid_lines = []
     cluster_only_dashed_lines = []
+    cluster_meta_data = []
     x_diff_treshold = 35
     y_diff_treshold = 350
+    # meta: 0 == undefined,  1 == solid, 2 == dashed
+
+    # checks cluster for treshhold
     for i in range(number_of_cluster):
         is_dashed = False
         for k in range(number_of_cluster):
@@ -97,25 +101,31 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
             # y difference
             y_diff_start_end = abs(cluster_start_end_points[0,1,i] - cluster_start_end_points[1,1,k])
             y_diff_end_start = abs(cluster_start_end_points[1,1,i] - cluster_start_end_points[0,1,k])
+
+            # start and end point
             if (x_diff_start_end < x_diff_treshold and y_diff_start_end < y_diff_treshold):
                 is_dashed = True
+            # end and start point
             if (x_diff_end_start < x_diff_treshold and y_diff_end_start < y_diff_treshold):
                 is_dashed = True
+
         if is_dashed == False:
             cluster_only_solid_lines.append(cluster_with_points[i])
+            cluster_meta_data.append(1)
         elif is_dashed == True:
             cluster_only_dashed_lines.append(cluster_with_points[i])
 
 
-    # append dashed line cluster to solid line cluster
+    # determine dashed line cluster and append to solid line cluster
     # TODO: return operation bei erster if abfrage schoener gestalten
     cluster_dashed_lines = determine_dashed_lines_cluster(cluster_only_dashed_lines)
     if cluster_dashed_lines is not None:
         cluster_only_solid_lines.append(cluster_dashed_lines)
-        # return cluster_only_solid_lines + cluster_dashed_lines
-        return cluster_only_solid_lines
+        # return cluster_only_solid_lines + cluster_dashed_lines        #should work but doesn't
+        cluster_meta_data.append(2)
+        return cluster_only_solid_lines, cluster_meta_data
     else:
-        return cluster_only_solid_lines
+        return cluster_only_solid_lines, cluster_meta_data
 
          
 # sorts the function points
@@ -196,7 +206,7 @@ def callback(data):
         cv2.circle(canvas, (int(cluster_start_end_points[1, 0, b]), int(cluster_start_end_points[1, 1, b])), 5, (255, 0, 0), -1)
 
     # find cluster with solid lines + dashed lines
-    cluster_with_solid_and_dashed_lines = determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points)
+    cluster_with_solid_and_dashed_lines, cluster_meta_data = determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points)
 
     # draw new cluster with solid lines + dashed lines on canvas
     # for u in range(int(len(cluster_with_solid_and_dashed_lines))):
@@ -226,7 +236,7 @@ def callback(data):
             x_t = x_t + str(function[0][p]) + ", "
             y_t = y_t + str(function[1][p]) + ", "
         # function_string = "x(t)= " + x_t +"; y(t)= " + y_t + "| \n "
-        function_string = x_t + ";" + y_t + "|"
+        function_string = str(cluster_meta_data[c]) + ";" + x_t + ";" + y_t + "|"
 
         message = message + function_string
     
@@ -235,7 +245,7 @@ def callback(data):
 
     # display canvas window
     cv2.imshow("points", canvas)
-    # cv2.imwrite('new_clusters.png', canvas)
+    # cv2.imwrite('result.png', canvas)
     cv2.waitKey(8000)
     cv2.destroyAllWindows()
 

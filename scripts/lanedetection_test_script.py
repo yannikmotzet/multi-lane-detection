@@ -12,7 +12,7 @@ def print_circles(points):
     for i in range (int(points.size / 2)):              # size ergibt sich aus x + y --> besser machen
         cv2.circle(canvas, (points[i, 0], points[i, 1]), 1,(r, g, b), -1)
 
-file = open("all_cluster", "r")
+file = open("all_cluster_without_perspective_transformation", "r")
 for line in file:
     # white canvas
     canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
@@ -56,6 +56,7 @@ for line in file:
         print(str(poly_degree) + "," + str(int(function_start_point)) + "," + str(cluster_y_value_min) + "," + str(int(function_end_point)) + "," + str(cluster_y_value_max))
 
     cv2.imshow("points", canvas)
+    # cv2.imwrite("raw.png", canvas)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
