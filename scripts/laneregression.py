@@ -68,6 +68,7 @@ def determine_cluster_start_end_points (cluster_with_points, number_of_cluster):
 # ACHTUNG! momentan werden alle gestrichelten cluster zu einer gestrichelten Linie zusammengefasst
 # eine unterscheidung, ob es mehere gestrichelte linien gibt, erfolgt nicht 
 # TODO mehrere linien erkenne, if abfrage besser machen
+# TODO Fehlererkennung, macht Cluster Sinn oder falsches Objekt uebermittelt?
 # takes unsorted cluster with cluster of dashed lines and looks for related dashed lines
 def determine_dashed_lines_cluster(cluster_only_dashed):
     if not len(cluster_only_dashed) == 0:
@@ -82,7 +83,9 @@ def determine_dashed_lines_cluster(cluster_only_dashed):
         return None
 
 
-# takes all cluster and returns cluster with solid and dashed lines (datatype of return in list with np array as items)
+# takes all cluster and returns:
+# 1) cluster with solid and dashed lines (datatype of return is list with np array as items)
+# 2) metadata (return datatype is list with integer items, the integer correspond to the type of the lines)
 def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points):
     cluster_only_solid_lines = []
     cluster_only_dashed_lines = []
@@ -208,6 +211,9 @@ def callback(data):
     # find cluster with solid lines + dashed lines
     cluster_with_solid_and_dashed_lines, cluster_meta_data = determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points)
 
+    # check if size of cluster correspond to relationg size of metadata
+    if len(cluster_with_solid_and_dashed_lines) != len(cluster_meta_data): print("error: size of meta data does not correspond to number of cluster")
+
     # draw new cluster with solid lines + dashed lines on canvas
     # for u in range(int(len(cluster_with_solid_and_dashed_lines))):
     #     draw_circles(cluster_with_solid_and_dashed_lines[u])
@@ -220,7 +226,8 @@ def callback(data):
 
         # put the points in order
         function_points_sorted = sort_function_points(function_points)
-        # get x(t) and y(t), function is list, function[0] contains parameters for x(t), function[1] for y(t)
+
+        # determind function by getting x(t) and y(t), function is a list, function[0] contains parameters for x(t), function[1] for y(t)
         function = build_function(function_points_sorted)
 
         # draw function
