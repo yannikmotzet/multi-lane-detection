@@ -12,6 +12,7 @@ def talker():
         
         print(os.getcwd())
         file_cluster = open("./scripts/all_cluster", "r")
+        file_cluster = open("./scripts/all_cluster_without_perspective_transformation", "r")      
 
         for line in file_cluster:
             # rospy.loginfo(topic_string)

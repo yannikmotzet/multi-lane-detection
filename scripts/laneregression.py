@@ -84,7 +84,7 @@ def determine_dashed_lines_cluster(cluster_only_dashed):
 
 
 # takes all cluster and returns:
-# 1) cluster with solid and dashed lines (datatype of return is list with np array as items)
+# 1) cluster with solid and dashed lines (datatype of return is list with np.array as items)
 # 2) metadata (return datatype is list with integer items, the integer correspond to the type of the lines)
 def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points):
     cluster_only_solid_lines = []
@@ -131,6 +131,13 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
         return cluster_only_solid_lines, cluster_meta_data
 
          
+# sorts function points clockwise
+#TODO: sort clockwise (https://stackoverflow.com/questions/51074984/sorting-according-to-clockwise-point-coordinates/51075469, https://www.pyimagesearch.com/2016/03/21/ordering-coordinates-clockwise-with-python-and-opencv/)
+def sort_function_points_cw(function_points):
+    return 0
+    #find anchor point, anchor point = most left point?
+
+
 # sorts the function points
 def sort_function_points(function_points):
     number_of_points = int(function_points.size / 2)
@@ -208,11 +215,11 @@ def callback(data):
         # end point
         cv2.circle(canvas, (int(cluster_start_end_points[1, 0, b]), int(cluster_start_end_points[1, 1, b])), 5, (255, 0, 0), -1)
 
-    # find cluster with solid lines + dashed lines
+    # find cluster with solid lines + dashed lines (line cluster)
     cluster_with_solid_and_dashed_lines, cluster_meta_data = determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points)
 
-    # check if size of cluster correspond to relationg size of metadata
-    if len(cluster_with_solid_and_dashed_lines) != len(cluster_meta_data): print("error: size of meta data does not correspond to number of cluster")
+    # check if size of cluster correspond to relating size of metadata
+    if len(cluster_with_solid_and_dashed_lines) != len(cluster_meta_data): print("warning: size of meta data does not correspond to number of cluster")
 
     # draw new cluster with solid lines + dashed lines on canvas
     # for u in range(int(len(cluster_with_solid_and_dashed_lines))):
@@ -223,6 +230,7 @@ def callback(data):
         # determine some points of cluster with Ramer-Douglas-Peucker algorithm
         function_points = cv2.approxPolyDP(cluster_with_solid_and_dashed_lines[c], 2, False)
         cv2.drawContours(canvas, function_points, -1, (0, 0, 255), 5)
+        if len(function_points) < 3: print("warning: function of a line might be faulty due to too less function points")
 
         # put the points in order
         function_points_sorted = sort_function_points(function_points)
@@ -232,7 +240,7 @@ def callback(data):
 
         # draw function
         # TODO: set proper end point
-        for i in range(0, 1500, 2):                             
+        for i in range(-500, 1500, 2):                             
             x = np.polyval(function[0], i)
             y = np.polyval(function[1], i)
             cv2.circle(canvas, (int(x), int(y)), 1, (0, 255, 0), -1)
@@ -252,7 +260,7 @@ def callback(data):
 
     # display canvas window
     cv2.imshow("points", canvas)
-    # cv2.imwrite('result.png', canvas)
+    cv2.imwrite('result.png', canvas)
     cv2.waitKey(8000)
     cv2.destroyAllWindows()
 
