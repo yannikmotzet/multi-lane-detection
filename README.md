@@ -20,7 +20,7 @@ for each step open new terminal and paste ``` source ./devel/setup.bash ``` in `
 ## How LaneRegressions works
 
 preliminary work:
-* in LaneDetection an algorithm for Perspective Transformation was implemented (to get the top-down view)
+* in LaneDetection an algorithm for Persepctive Transformation was implemented (to get the top-down view)
 * the cluster points of a few frames were written to a file
 
 LaneDetection dummy publisher:
@@ -44,4 +44,6 @@ Here is an example image of one frame.
 * red points: points calculated by Ramer–Douglas–Peucker algorithm
 * green lines: illustration of calculated lines
 ![result](result.jpg)
+
+Result without Perspective transformation:
 ![result](result_without_perspect_transf.png)
