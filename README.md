@@ -47,3 +47,7 @@ Here is an example image of one frame.
 
 Result without Perspective transformation:
 ![result](result_without_perspect_transf.png)
+
+## TODO
+* sort function points clockwise
+* detection of more than 3 lines
