@@ -42,7 +42,7 @@ Here is an example image of one frame.
 * black lines: raw cluster
 * blue points: start and end points of raw cluster 
 * red points: points calculated by Ramer–Douglas–Peucker algorithm
-* green lines: illustration of calculated lines
+* green lines: illustration of calculated functions
 ![result](result.jpg)
 
 Result without Perspective transformation:

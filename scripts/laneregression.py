@@ -133,9 +133,38 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
          
 # sorts function points clockwise
 #TODO: sort clockwise (https://stackoverflow.com/questions/51074984/sorting-according-to-clockwise-point-coordinates/51075469, https://www.pyimagesearch.com/2016/03/21/ordering-coordinates-clockwise-with-python-and-opencv/)
-def sort_function_points_cw(function_points):
-    return 0
-    #find anchor point, anchor point = most left point?
+def sort_function_points_improved(function_points):
+    number_of_points = int(function_points.size / 2)
+    function_points = np.reshape(function_points, (number_of_points, 2))
+    #find anchor point, anchor point = lowest point?
+    index_anchor_point = 0
+    value_anchor_point = 0
+    for i in range(number_of_points):
+        if function_points[i, 1] > value_anchor_point: 
+            index_anchor_point = i
+            value_anchor_point = function_points[i, 1]
+    function_points_sorted = np.array([[function_points[index_anchor_point, 0], function_points[index_anchor_point, 1]]])
+    function_points = np.delete(function_points, index_anchor_point, 0)
+    
+    # sort points
+    for i in range(0, number_of_points - 2):        # - 2 ????
+        smallest_distance = int(math.sqrt(picHeight**2 + picWidth**2)) # start value is diagonal of picture
+        index_point_smallest_distance = 0
+        print(i, function_points_sorted.shape)
+        for k in range (int(function_points.size / 2)):
+            x1 = function_points_sorted[i, 0]
+            y1 = function_points_sorted[i, 1]
+            x2 = function_points[k, 0]
+            y2 = function_points[k, 1]
+            if calcluate_distance_between_points(x1, y1, x2, y2) < smallest_distance:
+                smallest_distance = calcluate_distance_between_points(x1, y1, x2, y2)
+                index_point_smallest_distance = k
+        function_points_sorted = np.append(function_points_sorted, function_points[k, :].reshape(1, 2), axis=0)
+        function_points = np.delete(function_points, index_point_smallest_distance, 0)
+    # add last point
+    print(function_points.shape)
+    function_points_sorted = np.append(function_points_sorted, function_points[0, :].reshape(1, 2), axis=0)
+    return function_points_sorted
 
 
 # sorts the function points
@@ -227,14 +256,15 @@ def callback(data):
     
     # find function for each line
     for c in range(int(len(cluster_with_solid_and_dashed_lines))):
-        # determine some points of cluster with Ramer-Douglas-Peucker algorithm
+        # determine some points of cluster with Douglas-Peucker algorithm
         function_points = cv2.approxPolyDP(cluster_with_solid_and_dashed_lines[c], 2, False)
         cv2.drawContours(canvas, function_points, -1, (0, 0, 255), 5)
         if len(function_points) < 3: print("warning: function of a line might be faulty due to too less function points")
 
         # put the points in order
-        function_points_sorted = sort_function_points(function_points)
-
+        # function_points_sorted = sort_function_points(function_points)
+        function_points_sorted = sort_function_points_improved(function_points)
+ 
         # determind function by getting x(t) and y(t), function is a list, function[0] contains parameters for x(t), function[1] for y(t)
         function = build_function(function_points_sorted)
 
@@ -260,7 +290,7 @@ def callback(data):
 
     # display canvas window
     cv2.imshow("points", canvas)
-    cv2.imwrite('result.png', canvas)
+    # cv2.imwrite('result.png', canvas)
     cv2.waitKey(8000)
     cv2.destroyAllWindows()
 
