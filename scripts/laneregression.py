@@ -29,8 +29,8 @@ def draw_circles(points):
 
 
 def calcluate_distance_between_points(x1, y1, x2, y2):
-    x_diff = x2 - x1
-    y_diff = y2 - y1
+    x_diff = abs(x2 - x1)
+    y_diff = abs(y2 - y1)
     return math.sqrt(x_diff**2 + y_diff**2)
 
 # returns the start and end points of all clusters
@@ -131,39 +131,64 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
         return cluster_only_solid_lines, cluster_meta_data
 
          
-# sorts function points clockwise
+# sorts function points successively by looking for nearest neighbor (O(n^2))
 #TODO: sort clockwise (https://stackoverflow.com/questions/51074984/sorting-according-to-clockwise-point-coordinates/51075469, https://www.pyimagesearch.com/2016/03/21/ordering-coordinates-clockwise-with-python-and-opencv/)
 def sort_function_points_improved(function_points):
     number_of_points = int(function_points.size / 2)
     function_points = np.reshape(function_points, (number_of_points, 2))
-    #find anchor point, anchor point = lowest point?
+    
+    test1 = function_points
+
+    #find anchor point, anchor point = lowest point (max y)
     index_anchor_point = 0
     value_anchor_point = 0
     for i in range(number_of_points):
         if function_points[i, 1] > value_anchor_point: 
             index_anchor_point = i
             value_anchor_point = function_points[i, 1]
+
+    # insert anchor point in new np array, delete from old array
     function_points_sorted = np.array([[function_points[index_anchor_point, 0], function_points[index_anchor_point, 1]]])
     function_points = np.delete(function_points, index_anchor_point, 0)
     
     # sort points
-    for i in range(0, number_of_points - 2):        # - 2 ????
-        smallest_distance = int(math.sqrt(picHeight**2 + picWidth**2)) # start value is diagonal of picture
-        index_point_smallest_distance = 0
-        print(i, function_points_sorted.shape)
+    for i in range(0, number_of_points - 2):  # anchor point is already processed, leave last point
+        smallest_distance = math.sqrt(picHeight**2 + picWidth**2) # start value is diagonal of picture
+        index_point_smallest_distance = - 1
+
+        x1 = function_points_sorted[i, 0]
+        y1 = function_points_sorted[i, 1]
+
         for k in range (int(function_points.size / 2)):
-            x1 = function_points_sorted[i, 0]
-            y1 = function_points_sorted[i, 1]
             x2 = function_points[k, 0]
             y2 = function_points[k, 1]
+
+            # looks for neighbour with smallest distance
             if calcluate_distance_between_points(x1, y1, x2, y2) < smallest_distance:
                 smallest_distance = calcluate_distance_between_points(x1, y1, x2, y2)
                 index_point_smallest_distance = k
-        function_points_sorted = np.append(function_points_sorted, function_points[k, :].reshape(1, 2), axis=0)
+            
+
+        function_points_sorted = np.append(function_points_sorted, function_points[index_point_smallest_distance, :].reshape(1, 2), axis=0)
         function_points = np.delete(function_points, index_point_smallest_distance, 0)
+
+    
     # add last point
-    print(function_points.shape)
     function_points_sorted = np.append(function_points_sorted, function_points[0, :].reshape(1, 2), axis=0)
+
+    # # for debugging
+    # print(number_of_points)
+    # test = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
+    # for n in range (number_of_points):
+    #     cv2.putText(test, str(n), (function_points_sorted[n, 0] + int(random.randint(0, 10)),function_points_sorted[n, 1] + int(random.randint(0, 10))), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 0)
+    #     # cv2.putText(test, str(n), (test1[n, 0] + int(random.randint(0, 10)),test1[n, 1] + int(random.randint(0, 10))), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 255)
+    #     cv2.circle(test, (function_points_sorted[n, 0],function_points_sorted[n, 1]), 2, (0, 255, 0), -1)
+
+    # cv2.imshow("test", test)
+    # cv2.imwrite('test.png', test)
+    # cv2.waitKey(10000)
+    # cv2.destroyAllWindows()
+ 
     return function_points_sorted
 
 
@@ -171,7 +196,7 @@ def sort_function_points_improved(function_points):
 def sort_function_points(function_points):
     number_of_points = int(function_points.size / 2)
     function_points = np.reshape(function_points, (number_of_points, 2))
-    # https://stackoverflow.com/questions/2828059/sorting-arrays-in-numpy-by-column?noredirect=1&lq=1
+    # https://stackoverflow.com/a/2828371
     # function_points = np.sort(function_points.view('i4,i4'), order=['f1','f0'], axis=0).view(np.int)
     function_points.view('i4,i4').sort(order=['f1','f0'], axis=0)
     return function_points
@@ -194,6 +219,7 @@ def build_function(function_points_sorted):
 
 def callback(data):
     # rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
+
 
     # clusters
     global canvas
@@ -291,8 +317,8 @@ def callback(data):
     # display canvas window
     cv2.imshow("points", canvas)
     # cv2.imwrite('result.png', canvas)
-    cv2.waitKey(8000)
-    cv2.destroyAllWindows()
+    cv2.waitKey(2000)
+    # cv2.destroyAllWindows()
 
 
 def listener():
@@ -308,6 +334,7 @@ def listener():
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
+
 
 
 def talker(data_function):

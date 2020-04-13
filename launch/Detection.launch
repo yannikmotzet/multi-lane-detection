@@ -1,0 +1,5 @@
+<launch>
+
+    <node name="LaneDetection" pkg="laneregression" type="talker_cluster.py" output="screen" />
+
+</launch>

@@ -9,9 +9,9 @@ def talker():
     rospy.init_node('talker_cluster', anonymous=True)
     rate = rospy.Rate(0.5) #hz
     while not rospy.is_shutdown():
-        
         print(os.getcwd())
-        file_cluster = open("./scripts/all_cluster", "r")
+        file_cluster = open("./src/laneregression/scripts/all_cluster", "r")
+        # file_cluster = open("/home/zflab/catkin_ws/src/laneregression/scripts/all_cluster", "r")
         # file_cluster = open("./scripts/all_cluster_without_perspective_transformation", "r")      
 
         for line in file_cluster:

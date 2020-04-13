@@ -1,0 +1,7 @@
+<launch>
+
+    <node name="LaneDetection" pkg="laneregression" type="talker_cluster.py" />
+    <node name="LaneRegression" pkg="laneregression" type="laneregression.py" />
+    <node name="LaneAssist" pkg="laneregression" type="listener_laneassist_dummy.py" />
+
+</launch>
