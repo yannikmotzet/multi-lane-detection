@@ -52,8 +52,8 @@ def callback(data):
     # display canvas window
     cv2.imshow("listener_dummy", canvas)
     # cv2.imwrite('result.png', canvas)
-    cv2.waitKey(8000)
-    cv2.destroyAllWindows()
+    cv2.waitKey(2000)
+    # cv2.destroyAllWindows()
 
         
 
