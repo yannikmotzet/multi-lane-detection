@@ -65,11 +65,12 @@ def determine_cluster_start_end_points (cluster_with_points, number_of_cluster):
         cluster_start_end_points[1, 0, i] = int(end_x / end_x_counter)
     return cluster_start_end_points
 
+
+# takes unsorted cluster with cluster of dashed lines and looks for related dashed lines
 # ACHTUNG! momentan werden alle gestrichelten cluster zu einer gestrichelten Linie zusammengefasst
 # eine unterscheidung, ob es mehere gestrichelte linien gibt, erfolgt nicht 
 # TODO mehrere linien erkenne, if abfrage besser machen
 # TODO Fehlererkennung, macht Cluster Sinn oder falsches Objekt uebermittelt?
-# takes unsorted cluster with cluster of dashed lines and looks for related dashed lines
 def determine_dashed_lines_cluster(cluster_only_dashed):
     if not len(cluster_only_dashed) == 0:
         cluster_dashed_lines = []
@@ -83,52 +84,76 @@ def determine_dashed_lines_cluster(cluster_only_dashed):
         return None
 
 
+
 # takes all cluster and returns:
 # 1) cluster with solid and dashed lines (datatype of return is list with np.array as items)
 # 2) metadata (return datatype is list with integer items, the integer correspond to the type of the lines)
 def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points):
+    
+    # values for meta data: 0 == undefined,  1 == solid, 2 == dashed
+    META_UNDEFINED = 0
+    META_SOLID = 1
+    META_DASHED = 2
+    
     cluster_only_solid_lines = []
     cluster_only_dashed_lines = []
     cluster_meta_data = []
     x_diff_treshold = 35
     y_diff_treshold = 350
-    # meta: 0 == undefined,  1 == solid, 2 == dashed
 
-    # checks cluster for treshhold
-    for i in range(number_of_cluster):
-        is_dashed = False
-        for k in range(number_of_cluster):
+
+    cluster = cluster_with_points
+    start_end_points = cluster_start_end_points
+    meta = []
+    for i in range(len(cluster)):
+        meta.append(META_UNDEFINED)
+    k = 0
+
+
+    while (k < len(cluster)):
+        i = k + 1
+        while (i <= len(cluster) - 1):
             # x difference
-            x_diff_start_end = abs(cluster_start_end_points[0,0,i] - cluster_start_end_points[1,0,k])
-            x_diff_end_start = abs(cluster_start_end_points[1,0,i] - cluster_start_end_points[0,0,k])
+            x_diff_start_end = abs(start_end_points[0,0,k] - start_end_points[1,0,i])
+            x_diff_end_start = abs(start_end_points[1,0,k] - start_end_points[0,0,i])
             # y difference
-            y_diff_start_end = abs(cluster_start_end_points[0,1,i] - cluster_start_end_points[1,1,k])
-            y_diff_end_start = abs(cluster_start_end_points[1,1,i] - cluster_start_end_points[0,1,k])
-
-            # start and end point
+            y_diff_start_end = abs(start_end_points[0,1,k] - start_end_points[1,1,i])
+            y_diff_end_start = abs(start_end_points[1,1,k] - start_end_points[0,1,i]) 
+            
+            # compare start and end point
             if (x_diff_start_end < x_diff_treshold and y_diff_start_end < y_diff_treshold):
-                is_dashed = True
-            # end and start point
-            if (x_diff_end_start < x_diff_treshold and y_diff_end_start < y_diff_treshold):
-                is_dashed = True
+                # append cluster and adjust start end points
+                cluster[k] = np.append(cluster[k], cluster[i], 0)
+                del cluster[i]
+                # overwrite start point of k with start point of i, delete i
+                start_end_points[0,0,k] = start_end_points[0,0,i]
+                start_end_points[0,1,k] = start_end_points[0,1,i]
+                start_end_points = np.delete(start_end_points, i, 2)
+                meta[k] = META_DASHED
+                i = k + 1
 
-        if is_dashed == False:
-            cluster_only_solid_lines.append(cluster_with_points[i])
-            cluster_meta_data.append(1)
-        elif is_dashed == True:
-            cluster_only_dashed_lines.append(cluster_with_points[i])
+            # compare end and start point
+            elif (x_diff_end_start < x_diff_treshold and y_diff_end_start < y_diff_treshold):
+                # append cluster and adjust start end points
+                cluster[k] = np.append(cluster[k], cluster[i], 0)
+                del cluster[i]
+                # overwrite end point of k with end point of i, delete i
+                start_end_points[1,0,k] = start_end_points[1,0,i]
+                start_end_points[1,1,k] = start_end_points[1,1,i]
+                start_end_points = np.delete(start_end_points, i, 2)
+                meta[k] = META_DASHED
+                i = k + 1
+            else:
+                i = i + 1
 
+        if meta[k] == META_UNDEFINED:
+            meta[k] = META_SOLID
+        k = k + 1
+    
+    # check that meta list has same length like cluster list
+    del meta[len(cluster):]
 
-    # determine dashed line cluster and append to solid line cluster
-    # TODO: return operation bei erster if abfrage schoener gestalten
-    cluster_dashed_lines = determine_dashed_lines_cluster(cluster_only_dashed_lines)
-    if cluster_dashed_lines is not None:
-        cluster_only_solid_lines.append(cluster_dashed_lines)
-        # return cluster_only_solid_lines + cluster_dashed_lines        #should work but doesn't
-        cluster_meta_data.append(2)
-        return cluster_only_solid_lines, cluster_meta_data
-    else:
-        return cluster_only_solid_lines, cluster_meta_data
+    return cluster, meta
 
          
 #TODO: sort clockwise (https://stackoverflow.com/questions/51074984/sorting-according-to-clockwise-point-coordinates/51075469, https://www.pyimagesearch.com/2016/03/21/ordering-coordinates-clockwise-with-python-and-opencv/)
@@ -280,9 +305,6 @@ def callback(data):
 
     # find cluster with solid lines + dashed lines (line cluster)
     cluster_with_solid_and_dashed_lines, cluster_meta_data = determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points)
-
-    # check if size of cluster correspond to relating size of metadata
-    if len(cluster_with_solid_and_dashed_lines) != len(cluster_meta_data): print("warning: size of meta data does not correspond to number of cluster")
 
     # draw new cluster with solid lines + dashed lines on canvas
     # for u in range(int(len(cluster_with_solid_and_dashed_lines))):
