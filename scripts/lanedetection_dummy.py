@@ -5,8 +5,8 @@ from std_msgs.msg import String
 import os
 
 def talker():
-    pub = rospy.Publisher('chatter_cluster', String, queue_size=10)
-    rospy.init_node('talker_cluster', anonymous=True)
+    pub = rospy.Publisher('lanedetection_cluster', String, queue_size=10)
+    rospy.init_node('lanedetection_dummy', anonymous=True)
     rate = rospy.Rate(0.5) #hz
     while not rospy.is_shutdown():
         print(os.getcwd())

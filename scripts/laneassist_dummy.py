@@ -28,10 +28,13 @@ def callback(data):
         line_data = message_data[i].split(";")
         print("line_data" + str(line_data))
 
+        position = line_data[0]
+        meta = line_data[1]
+        
         x_t = np.zeros((3))
         y_t = np.zeros((3))
-        x_t_data = line_data[1].split(",")
-        y_t_data = line_data[2].split(",")
+        x_t_data = line_data[2].split(",")
+        y_t_data = line_data[3].split(",")
 
         # build function
         for k in range(3):
@@ -50,7 +53,7 @@ def callback(data):
 
 
     # display canvas window
-    cv2.imshow("listener_dummy", canvas)
+    cv2.imshow("laneassist_dummy", canvas)
     # cv2.imwrite('result.png', canvas)
     cv2.waitKey(2000)
     # cv2.destroyAllWindows()
@@ -65,9 +68,9 @@ def listener():
     # anonymous=True flag means that rospy will choose a unique
     # name for our 'listener' node so that multiple listeners can
     # run simultaneously.
-    rospy.init_node('listener_laneassist_dummy', anonymous=True)
+    rospy.init_node('laneassist_dummy', anonymous=True)
 
-    rospy.Subscriber("chatter_function", String, callback)
+    rospy.Subscriber("laneregression_functions", String, callback)
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
