@@ -1,0 +1,8 @@
+int8 position
+int8 meta
+float32 a
+float32 b
+float32 c
+float32 d
+float32 e
+float32 f

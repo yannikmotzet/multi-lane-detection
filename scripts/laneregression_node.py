@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rospy
 from std_msgs.msg import String
+from laneregression.msg import functionData, functionArray
 import numpy as np
 import cv2
 import random
@@ -306,7 +307,7 @@ def get_order_of_lines(functions):
 
 def callback(data):
     # rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
-
+    
     # clusters
     global canvas
     canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
@@ -401,15 +402,6 @@ def callback(data):
         cv2.line(canvas, (int(picWidth/2), picHeight),
                  (int(picWidth/2), picHeight - 20), (0, 0, 0), 5)
 
-        # build message
-        x_t, y_t = "", ""
-        for p in range(len(function[0])):
-            x_t = x_t + str(function[0][p]) + ", "
-            y_t = y_t + str(function[1][p]) + ", "
-        # function_string = "x(t)= " + x_t +"; y(t)= " + y_t + "| \n "
-        function_string = str(
-            cluster_meta_data[c]) + ";" + x_t + ";" + y_t + "|"
-
 
     # sort lines
     index_right, index_left = get_order_of_lines(all_functions)
@@ -417,36 +409,41 @@ def callback(data):
     # len(order_of_lines), len(meta), int(len(all_functions)/2) should be identical
     if len(all_meta) != int(len(all_functions)/2): print("warning: number of functions does not correspond to number of meta")
     
-    # build message
-    message = ""
+    # ROS topic
+    function_array = functionArray()
     # left lines
     for p in range(len(index_left)):
         index = index_left[p]
-        msg_position = str((p + 1)*(-1))
-        msg_meta = str(all_meta[index])
-        x_t, y_t = "", ""
-        for u in range(len(all_functions[index*2])):
-            # TODO x_t = x_t + "," + all_functions[index*2][u] 
-            x_t = x_t + str(all_functions[index*2][u]) + ","
-            y_t = y_t + str(all_functions[index*2+1][u]) + ","
-        msg_function = x_t + ";" + y_t
-        message = message + msg_position + ";" + msg_meta + ";" + msg_function + "|"
+        function_data = functionData()
+        function_data.position = (p + 1)*(-1)
+        function_data.meta = all_meta[index]
+        function_data.a = all_functions[index*2][0]
+        function_data.d = all_functions[index*2+1][0]
+        function_data.b = all_functions[index*2][1]
+        function_data.e = all_functions[index*2+1][1]
+        function_data.c = all_functions[index*2][2]
+        function_data.f = all_functions[index*2+1][2]
+
+        function_array.functions.append(function_data)
+
     # right lines
     for p in range(len(index_right)):
         index = index_right[p]
-        msg_position = str(p)
-        msg_meta = str(all_meta[index])
-        x_t, y_t = "", ""
-        for u in range(len(all_functions[index*2])):
-            # TODO x_t = x_t + "," + all_functions[index*2][u] 
-            x_t = x_t + str(all_functions[index*2][u]) + ","
-            y_t = y_t + str(all_functions[index*2+1][u]) + "," 
-        msg_function = x_t + ";" + y_t
-        message = message + msg_position + ";" + msg_meta + ";" + msg_function + "|"
+        function_data = functionData()
+        function_data.position = p
+        function_data.meta = all_meta[index]
+        function_data.a = all_functions[index*2][0]
+        function_data.d = all_functions[index*2+1][0]
+        function_data.b = all_functions[index*2][1]
+        function_data.e = all_functions[index*2+1][1]
+        function_data.c = all_functions[index*2][2]
+        function_data.f = all_functions[index*2+1][2]
+
+        function_array.functions.append(function_data)
 
 
     # send a message via ROS topic
-    talker(message)
+    talker(function_array.functions)
 
     # display canvas window
     cv2.imshow("points", canvas)
@@ -471,7 +468,7 @@ def listener():
 
 
 def talker(data_function):
-    pub = rospy.Publisher('laneregression_functions', String, queue_size=10)
+    pub = rospy.Publisher('laneregression_functions', functionArray, queue_size=10)
     # rospy.init_node('talker_function', anonymous=True)
     rate = rospy.Rate(10)  # hz
     if not rospy.is_shutdown():
