@@ -283,9 +283,10 @@ def get_order_of_lines(functions):
         t_2 = (-e - discriminant) / (2*d)
 
         # determine x value for t value
-        x = a*t_2**2 + b*t_2 + c
+        x_1 = a*t_1**2 + b*t_1 + c
+        x_2 = a*t_2**2 + b*t_2 + c
 
-        lines_pos_x.append(x)
+        lines_pos_x.append(x_2)
     
     #sort lines_pos_x and get sorted index back
     index_sorted = sorted(range(len(lines_pos_x)), key=lines_pos_x.__getitem__)
@@ -415,7 +416,7 @@ def callback(data):
     for p in range(len(index_left)):
         index = index_left[p]
         function_data = functionData()
-        function_data.position = (p + 1)*(-1)
+        function_data.position = (p + 1)
         function_data.meta = all_meta[index]
         function_data.a = all_functions[index*2][0]
         function_data.d = all_functions[index*2+1][0]
@@ -430,7 +431,7 @@ def callback(data):
     for p in range(len(index_right)):
         index = index_right[p]
         function_data = functionData()
-        function_data.position = p
+        function_data.position = p*(-1)
         function_data.meta = all_meta[index]
         function_data.a = all_functions[index*2][0]
         function_data.d = all_functions[index*2+1][0]
