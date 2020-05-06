@@ -12,9 +12,9 @@ start roscore master:
 * ``` ~/catkin_ws$: roscore ```
 
 for each step open new terminal and paste ``` source ./devel/setup.bash ``` in ``` /catkin_ws$ ```
-* ``` ~/catkin_ws/src/lane-regression$: rosrun lane-regression talker_cluster.py ``` (talker simuates interface from LaneDetection)
-* ``` ~/catkin_ws$: rosrun lane-regression laneregression.py ```  (main node)
-* ``` ~/catkin_ws$: rosrun lane-regression listener_laneassist_dummy.py ``` (listener simulates interface to LaneAssist)
+* ``` ~/catkin_ws/src/lane-regression$: rosrun lane-regression lanedetection_dummy.py ``` (talker simuates interface from LaneDetection)
+* ``` ~/catkin_ws$: rosrun lane-regression laneregression-node.py ```  (main node)
+* ``` ~/catkin_ws$: rosrun lane-regression laneassist_dummy.py ``` (listener simulates interface to LaneAssist)
 
 
 ## How LaneRegressions works

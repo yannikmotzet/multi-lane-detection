@@ -35,9 +35,9 @@ def calcluate_distance_between_points(x1, y1, x2, y2):
     y_diff = abs(y2 - y1)
     return math.sqrt(x_diff**2 + y_diff**2)
 
+
+
 # returns the start and end points of all clusters
-
-
 def determine_cluster_start_end_points(cluster_with_points, number_of_cluster):
     cluster_start_end_points = np.zeros((2, 2, number_of_cluster))
     # determine start and end points
@@ -69,23 +69,6 @@ def determine_cluster_start_end_points(cluster_with_points, number_of_cluster):
         cluster_start_end_points[1, 0, i] = int(end_x / end_x_counter)
     return cluster_start_end_points
 
-
-# takes unsorted cluster with cluster of dashed lines and looks for related dashed lines
-# ACHTUNG! momentan werden alle gestrichelten cluster zu einer gestrichelten Linie zusammengefasst
-# eine unterscheidung, ob es mehere gestrichelte linien gibt, erfolgt nicht
-# TODO mehrere linien erkenne, if abfrage besser machen
-# TODO Fehlererkennung, macht Cluster Sinn oder falsches Objekt uebermittelt?
-def determine_dashed_lines_cluster(cluster_only_dashed):
-    if not len(cluster_only_dashed) == 0:
-        cluster_dashed_lines = []
-        cluster_dashed_lines.append(cluster_only_dashed[0])
-        for i in range(1, len(cluster_only_dashed), 1):
-            a = cluster_dashed_lines[0]
-            b = cluster_only_dashed[i]
-            cluster_dashed_lines[0] = np.concatenate((a, b))
-        return cluster_dashed_lines[0]
-    else:
-        return None
 
 
 # takes all cluster and returns:
@@ -161,7 +144,8 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
     return cluster, meta
 
 
-# TODO: sort clockwise (https://stackoverflow.com/questions/51074984/sorting-according-to-clockwise-point-coordinates/51075469, https://www.pyimagesearch.com/2016/03/21/ordering-coordinates-clockwise-with-python-and-opencv/)
+
+
 # sorts function points successively by looking for nearest neighbor (O(n^2))
 def sort_function_points_improved(points):
 
@@ -236,6 +220,7 @@ def sort_function_points_improved(points):
     return function_points_sorted
 
 
+# NOT IN USE!
 # sorts the function points
 def sort_function_points(function_points):
     number_of_points = int(function_points.size / 2)
@@ -245,9 +230,10 @@ def sort_function_points(function_points):
     function_points.view('i4,i4').sort(order=['f1', 'f0'], axis=0)
     return function_points
 
+
+
+
 # using the sorted function points to build a function with x(t) and y(t)
-
-
 def build_function(function_points_sorted):
     number_of_points = int(function_points_sorted.size / 2)
     value_table = np.zeros((number_of_points, 3))
@@ -263,20 +249,25 @@ def build_function(function_points_sorted):
     return [x_function, y_function]
 
 
+
+# determination of arrangement of the lines, returns position index for each line (0: right border line, 1: left border line)
 def get_order_of_lines(functions):
     lines_pos_x = []
     left_lines_index = []
     right_lines_index = []
 
     for i in range(0, len(functions), 2):
+        # x(t)
         a = functions[i][0]
         b = functions[i][1]
         c = functions[i][2]
+
+        # y(t)
         d = functions[i+1][0]
         e = functions[i+1][1]
-        f = functions[i+1][2] - truck_pos_x
+        f = functions[i+1][2] - (picHeight)     # substract picHeight to find intersection with lower picture border, not the zeropoints
 
-        # determine value of t at intersection with lower picture border
+        # determine value of t at intersection with lower picture border -> quadratic formula
         discriminant = math.sqrt(e**2 - (4 * d * f))
 
         t_1 = (-e + discriminant) / (2*d)
@@ -302,8 +293,12 @@ def get_order_of_lines(functions):
     # reverse left_lines_index (truck_pos is anchor and you cound lines from right to left)
     left_lines_index.reverse()
 
-
     return right_lines_index, left_lines_index
+
+
+
+
+
 
 
 def callback(data):
@@ -319,7 +314,9 @@ def callback(data):
     cluster = data.data.split(";")
     number_of_cluster = len(cluster) - 1
 
+
     # draw points of raw cluster on canvas
+    ####################################################
     # go through clusters
     for n in range(number_of_cluster):
         fields = cluster[n].split(",")
@@ -350,6 +347,10 @@ def callback(data):
         # draw point cloud of current raw cluster on canvas
         draw_circles(points)
 
+
+    
+    # find dashed/solid lines
+    ####################################################
     # find start and end points of cluster
     cluster_start_end_points = determine_cluster_start_end_points(
         cluster_with_points, number_of_cluster)
@@ -373,15 +374,18 @@ def callback(data):
     # for u in range(int(len(cluster_with_solid_and_dashed_lines))):
     #     draw_circles(cluster_with_solid_and_dashed_lines[u])
 
+    
+
+
     # find function for each line
+    ####################################################
     for c in range(int(len(cluster_with_solid_and_dashed_lines))):
         # determine some points of cluster with Douglas-Peucker algorithm
         function_points = cv2.approxPolyDP(
             cluster_with_solid_and_dashed_lines[c], 2, False)
         cv2.drawContours(canvas, function_points, -1, (0, 0, 255), 5)
         if len(function_points) < 3:
-            print(
-                "warning: function of a line might be faulty due to too less function points")
+            print("warning: function of a line might be faulty due to too less function points")
 
         # put the points in order
         # function_points_sorted = sort_function_points(function_points)
@@ -404,14 +408,22 @@ def callback(data):
                  (int(picWidth/2), picHeight - 20), (0, 0, 0), 5)
 
 
-    # sort lines
+
+
+    # sort lines by position
+    ####################################################
     index_right, index_left = get_order_of_lines(all_functions)
 
     # len(order_of_lines), len(meta), int(len(all_functions)/2) should be identical
     if len(all_meta) != int(len(all_functions)/2): print("warning: number of functions does not correspond to number of meta")
     
+    
+    
+    
+    ####################################################
     # ROS topic
     function_array = functionArray()
+    
     # left lines
     for p in range(len(index_left)):
         index = index_left[p]
@@ -442,15 +454,19 @@ def callback(data):
 
         function_array.functions.append(function_data)
 
-
-    # send a message via ROS topic
+    # send  message via ROS topic
     talker(function_array.functions)
 
+    
+    
+    ####################################################
     # display canvas window
     cv2.imshow("points", canvas)
     cv2.imwrite('result.png', canvas)
     cv2.waitKey(2000)
     # cv2.destroyAllWindows()
+
+
 
 
 def listener():

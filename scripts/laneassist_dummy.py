@@ -21,18 +21,24 @@ def callback(data):
     rospy.loginfo("I recived " + str(int(len(data.functions))) + " polynomial(s).")
 
     functions = data.functions
+    right_border_line = None
+    left_border_line = None
 
-    #################################
+    
     # draw functions to canvas
+    #################################
     canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
+
     for i in range(len(functions)):
-        b, g, r = random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
+
+        b, g, b = 127, 127, 0
+
         if functions[i].position == 0:
             right_border_line = functions[i]
-            b, g, r = 0, 255, 0
+            b, g, b = 0, 255, 0
         elif functions[i].position == 1:
             left_border_line = functions[i]
-            b, g, r = 0, 255, 0
+            b, g, b = 0, 255, 0
 
         x_coefficient = [None] * 3
         y_coefficient = [None] * 3
@@ -45,10 +51,11 @@ def callback(data):
         for m in range(-250, 1500, 2):                             
             x = np.polyval(x_coefficient, m)
             y = np.polyval(y_coefficient, m)
-            cv2.circle(canvas, (int(x), int(y)), 1, (b, g, r), -1)
+            cv2.circle(canvas, (int(x), int(y)), 1, (b, g, b), -1)
 
-    #################################
+    
     # calculate ideal line
+    #################################
     ideal_x_coefficient = [None] * 3
     ideal_y_coefficient = [None] * 3
     ideal_x_coefficient[0] = (right_border_line.a + left_border_line.a) / 2
@@ -62,34 +69,44 @@ def callback(data):
         y = np.polyval(ideal_y_coefficient, m)
         cv2.circle(canvas, (int(x), int(y)), 1, (0, 0, 255), -1)
 
+    # determine offset
     #################################
-    # determine offset                          # not debugged!!!
+    
+    #x(t)
     a = ideal_x_coefficient[0]
-    r = ideal_x_coefficient[1]
+    b = ideal_x_coefficient[1]
     c = ideal_x_coefficient[2]
+    #y(t)
     d = ideal_y_coefficient[0]
     e = ideal_y_coefficient[1]
-    f = ideal_y_coefficient[2] - truck_pos_x
+    f = ideal_y_coefficient[2] - picHeight      # substract picHeight to find intersection with lower picture border, not the zeropoints
 
+    # determine value of t at intersection with lower picture border -> quadratic formula (Mitternachtformel) 
+    # quadratic formula (Mitternachtsformel)
     discriminant = math.sqrt(e**2 - (4 * d * f))
-    # t_1 = (-e + discriminant) / (2*d)
+    
+    t_1 = (-e + discriminant) / (2*d)
     t_2 = (-e - discriminant) / (2*d)
     
-    # x_1 = a*t_1**2 + r*t_1 + c
-    x_2 = a*t_2**2 - r*t_2 + c
-
+    # determine x value for t value
+    x_1 = a*t_1**2 + b*t_1 + c
+    x_2 = a*t_2**2 - b*t_2 + c
+    
     # offset_1 = np.polyval(ideal_x_coefficient, x_1) - (picWidth/2)
     offset_2 = np.polyval(ideal_x_coefficient, x_2) - (picWidth/2)
     # print(offset_1)
-    print(offset_2)
+    print("offset: " + str(offset_2))
     
 
-    #################################
+
     # draw position of truck
+    #################################
     cv2.line(canvas, (int(picWidth/2), picHeight),
                  (int(picWidth/2), picHeight - 20), (0, 0, 0), 5)
     
+    
     # display canvas window
+    #################################
     cv2.imshow("laneassist_dummy", canvas)
     # cv2.imwrite('result.png', canvas)
     cv2.waitKey(2000)
