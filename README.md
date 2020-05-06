@@ -1,20 +1,19 @@
-attention: manual not tested yet! (on test system it is working)
-
 ## How to clone
 * clone in your ROS workspace: ``` ~/catkin_ws/scr/ ```
-* ``` ~/catkin_ws$: . ~/catkin_ws/devel/setup.bash ```
 
 ## How to build
+* ``` ~/catkin_ws$: source /opt/ros/melodic/setup.bash ```
+* ``` ~/catkin_ws$: source devel/setup.bash ```
 * build the project: ``` ~/catkin_ws$: catkin_make ```
 
 ## How to run
 start roscore master:
 * ``` ~/catkin_ws$: roscore ```
 
-for each step open new terminal and paste ``` source ./devel/setup.bash ``` in ``` /catkin_ws$ ```
-* ``` ~/catkin_ws/src/lane-regression$: rosrun lane-regression lanedetection_dummy.py ``` (talker simuates interface from LaneDetection)
-* ``` ~/catkin_ws$: rosrun lane-regression laneregression-node.py ```  (main node)
-* ``` ~/catkin_ws$: rosrun lane-regression laneassist_dummy.py ``` (listener simulates interface to LaneAssist)
+for each step open new terminal and paste ``` source devel/setup.bash ``` in ``` /catkin_ws$ ```
+* ``` ~/catkin_ws/src/laneregression$: rosrun laneregression lanedetection_dummy.py ``` (talker simuates interface from LaneDetection)
+* ``` ~/catkin_ws$: rosrun laneregression laneregression-node.py ```  (main node)
+* ``` ~/catkin_ws$: rosrun laneregression laneassist_dummy.py ``` (listener simulates interface to LaneAssist)
 
 
 ## How LaneRegressions works
