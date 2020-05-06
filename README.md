@@ -1,5 +1,5 @@
 ## How to clone
-* clone in your ROS workspace: ``` ~/catkin_ws/scr/ ```
+* clone in your ROS workspace: ``` ~/catkin_ws/scr/: git clone https://gitlab.com/zfinnolab/lane-detection-assist/laneregression.git ```
 
 ## How to build
 * ``` ~/catkin_ws$: source /opt/ros/melodic/setup.bash ```
