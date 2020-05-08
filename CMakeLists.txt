@@ -52,6 +52,8 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    functionData.msg
    functionArray.msg
+   point.msg   
+   clusterData.msg
 #   Message2.msg
  )
 

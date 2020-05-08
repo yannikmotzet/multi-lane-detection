@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 from std_msgs.msg import String
-from laneregression.msg import functionData, functionArray
+from laneregression.msg import functionData, functionArray, point, clusterData
 import numpy as np
 import cv2
 import random
@@ -300,7 +300,8 @@ def get_order_of_lines(functions):
 
 
 
-
+# callback function
+####################################################
 def callback(data):
     # rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
     
@@ -311,41 +312,75 @@ def callback(data):
     all_functions = []
     all_meta = []
 
-    cluster = data.data.split(";")
-    number_of_cluster = len(cluster) - 1
+
+    # # draw points of raw cluster on canvas
+    # ####################################################
+    # cluster = data.data.split(";")
+    # number_of_cluster = len(cluster) - 1
+    
+    # # go through clusters
+    # for n in range(number_of_cluster):
+    #     fields = cluster[n].split(",")
+    #     number_of_points = int((len(fields) - 1) / 2)
+    #     points = np.zeros((number_of_points, 2))
+    #     cluster_y_value_min = 960
+    #     cluster_y_value_max = 0
+
+    #     # go through points of cluster
+    #     for i in range(len(fields) - 1):   # last field is empty
+    #         # x-value
+    #         if (i % 2 == 0):
+    #             points[(int(i/2)), 0] = fields[i]
+    #         # y-value
+    #         else:
+    #             points[(int((i-1)/2)), 1] = fields[i]
+    #             # find min und max y-value
+    #             if int(fields[i]) < cluster_y_value_min:
+    #                 cluster_y_value_min = int(fields[i])
+    #             elif int(fields[i]) > cluster_y_value_max:
+    #                 cluster_y_value_max = int(fields[i])
+
+    #     # convert string to int
+    #     points = points.astype(int)
+    #     # append points of current cluster to global list
+    #     cluster_with_points.append(points)
+
+    #     # draw point cloud of current raw cluster on canvas
+    #     draw_circles(points)
 
 
-    # draw points of raw cluster on canvas
-    ####################################################
-    # go through clusters
-    for n in range(number_of_cluster):
-        fields = cluster[n].split(",")
-        number_of_points = int((len(fields) - 1) / 2)
-        points = np.zeros((number_of_points, 2))
-        cluster_y_value_min = 960
-        cluster_y_value_max = 0
-
-        # go through points of cluster
-        for i in range(len(fields) - 1):   # last field is empty
-            # x-value
-            if (i % 2 == 0):
-                points[(int(i/2)), 0] = fields[i]
-            # y-value
-            else:
-                points[(int((i-1)/2)), 1] = fields[i]
-                # find min und max y-value
-                if int(fields[i]) < cluster_y_value_min:
-                    cluster_y_value_min = int(fields[i])
-                elif int(fields[i]) > cluster_y_value_max:
-                    cluster_y_value_max = int(fields[i])
-
-        # convert string to int
+    number_of_cluster = len(data.size)
+    
+    index = 0
+    for n in range(len(data.size)):
+        points = np.zeros((data.size[n], 2))
+        for i in range(data.size[n]):
+            points[i, 0] = int(data.points[index + i].x)
+            points[i, 1] = int(data.points[index + i].y)
+        index = index + data.size[n]
+        
         points = points.astype(int)
-        # append points of current cluster to global list
         cluster_with_points.append(points)
 
         # draw point cloud of current raw cluster on canvas
         draw_circles(points)
+
+    
+    # # go through clusters
+    # for n in range(len(cluster_raw)):
+    #     number_of_points = len(cluster_raw[n])
+    #     points = np.zeros((number_of_points, 2))
+    #     # go through points of cluster
+    #     for i in range(len(cluster_raw[n])):
+    #         if (i % 2 == 0):
+    #             points[(int(i/2)), 0] = cluster_raw[n][i].x
+    #         elif (i % 2 != 0):
+    #             points[(int((i-1)/2)), 1] = cluster_raw[n][i].y
+    #     # append points of current cluster to global list
+    #     cluster_with_points.append(points)
+
+    #     # draw point cloud of current raw cluster on canvas
+    #     draw_circles(points)
 
 
     
@@ -478,7 +513,7 @@ def listener():
     # run simultaneously.
     rospy.init_node('laneregression', anonymous=True)
 
-    rospy.Subscriber("lanedetection_cluster", String, callback)
+    rospy.Subscriber("lanedetection_cluster", clusterData, callback)
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
