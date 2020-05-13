@@ -35,7 +35,7 @@ def talker():
                     all_cluster.points.append(single_point)
 
 
-            rospy.loginfo(all_cluster)
+            # rospy.loginfo(all_cluster)
             pub.publish(all_cluster)
             rate.sleep()
 
