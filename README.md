@@ -11,8 +11,8 @@ start roscore master:
 * ``` ~/catkin_ws$: roscore ```
 
 for each step open new terminal and paste ``` source devel/setup.bash ``` in ``` /catkin_ws$ ```
-* ``` ~/catkin_ws/src/laneregression$: rosrun laneregression lanedetection_dummy.py ``` (talker simuates interface from LaneDetection)
-* ``` ~/catkin_ws$: rosrun laneregression laneregression-node.py ```  (main node)
+* ``` ~/catkin_ws$: rosrun laneregression lanedetection_dummy.py ``` (talker simuates interface from LaneDetection)
+* ``` ~/catkin_ws$: rosrun laneregression laneregression_node.py ```  (main node)
 * ``` ~/catkin_ws$: rosrun laneregression laneassist_dummy.py ``` (listener simulates interface to LaneAssist)
 
 
