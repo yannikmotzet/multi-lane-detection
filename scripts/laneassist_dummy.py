@@ -13,53 +13,42 @@ __version__ = '0.1.0'
 __email__ = 'yannik.motzet@outlook.com'
 __status__ = 'in development'
 
-# Welches Bild ist hier gemeint? (Kamera, Video, Foto)
-picHeight = 960                                                      # Bildhöhe
-picWidth = 1280                                                      # Bildbreite
-truck_pos_x = int(picWidth / 2)                                      # Truck wird in der Mitte des Bildes positioniert
+picHeight = 960
+picWidth = 1280
+truck_pos_x = int(picWidth / 2)
 
-# Diese beiden Zeilen verstehe ich leider nicht
 def callback(data):
     rospy.loginfo("I recived " + str(int(len(data.functions))) + " polynomial(s).")
 
     functions = data.functions
-    # Was bedeutet das None?
-    right_border_line = None                                         # rechte Fahrbahnbegrenzungslinie
-    left_border_line = None                                          # linke Fahrbahnbegrenzungslinie
+    right_border_line = None
+    left_border_line = None
 
     
     # draw functions to canvas
     #################################
-
-    # Ist canvas das Koordinatensystem?
     canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
 
-    for i in range(len(functions)):                                
-        # Warum wird hier b überschrieben? Zuerst wird b = 127 zugewiesen und dann b = 0
-        b, g, r = 127, 127, 0
-        
-        if functions[i].position == 0:                               # wenn die Position der Funktion = 0 ist, 
-            right_border_line = functions[i]                         # ist die rechte Fahrbahnbegrenzungslinie = der Funktion
-            b, g, r = 0, 255, 0                                      
-        elif functions[i].position == 1:                             # wenn die Position der Funktion 0 1 ist,
-            left_border_line = functions[i]                          # ist die linke Fahrbahnbegrenzungslinie = der Funktion 
-            b, g, r = 0, 255, 0
+    for i in range(len(functions)):
 
-        # Warum wird hier mit 3 multipliziert?
+        b, g, b = 127, 127, 0
+
+        if functions[i].position == 0:
+            right_border_line = functions[i]
+            b, g, b = 0, 255, 0
+        elif functions[i].position == 1:
+            left_border_line = functions[i]
+            b, g, b = 0, 255, 0
+
         x_coefficient = [None] * 3
         y_coefficient = [None] * 3
-        # Was bedeuten die Zahlen 0,1,2 ? Waren das die Linienarten? 0 = durchgezogene Linie, 1 = gestrichelte Linie, 2 = ?
-        # x-Werte 
         x_coefficient[0] = functions[i].a
         x_coefficient[1] = functions[i].b
         x_coefficient[2] = functions[i].c
-        # y-Werte 
         y_coefficient[0] = functions[i].d
         y_coefficient[1] = functions[i].e
         y_coefficient[2] = functions[i].f
-
-        for m in range(-250, 1500, 2):                  
-            # Welche Polynom Funktion wird hier beschrieben?           
+        for m in range(-250, 1500, 2):                             
             x = np.polyval(x_coefficient, m)
             y = np.polyval(y_coefficient, m)
             cv2.circle(canvas, (int(x), int(y)), 1, (b, g, b), -1)
@@ -69,19 +58,15 @@ def callback(data):
     #################################
     ideal_x_coefficient = [None] * 3
     ideal_y_coefficient = [None] * 3
-    # x-Werte
     ideal_x_coefficient[0] = (right_border_line.a + left_border_line.a) / 2
     ideal_x_coefficient[1] = (right_border_line.b + left_border_line.b) / 2
     ideal_x_coefficient[2] = (right_border_line.c + left_border_line.c) / 2
-    # y-Werte
     ideal_y_coefficient[0] = (right_border_line.d + left_border_line.d) / 2
     ideal_y_coefficient[1] = (right_border_line.e + left_border_line.e) / 2
     ideal_y_coefficient[2] = (right_border_line.f + left_border_line.f) / 2
-
     for m in range(-250, 1500, 2):                             
         x = np.polyval(ideal_x_coefficient, m)
         y = np.polyval(ideal_y_coefficient, m)
-        # Müsste es in der Klammer nicht (0,225,0) heißen?, weil b,g,b in Zeile 43 und 46 so definiert wurde?
         cv2.circle(canvas, (int(x), int(y)), 1, (0, 0, 255), -1)
 
     # determine offset
@@ -98,8 +83,6 @@ def callback(data):
 
     # determine value of t at intersection with lower picture border -> quadratic formula (Mitternachtformel) 
     # quadratic formula (Mitternachtsformel)
-
-    # Sind die Variablen in der Formel die idealen Koeffizienten?
     discriminant = math.sqrt(e**2 - (4 * d * f))
     
     t_1 = (-e + discriminant) / (2*d)
