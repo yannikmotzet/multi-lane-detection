@@ -211,3 +211,5 @@ include_directories(
 # catkin_add_nosetests(test)
 
 
+add_executable(lanedetection src/lanedetection.cpp)
+target_link_libraries(lanedetection ${catkin_LIBRARIES})
