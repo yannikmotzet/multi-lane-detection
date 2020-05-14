@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
-from std_msgs.msg import String
-from laneregression.msg import functionData, functionArray
+from std_msgs.msg import String, Float32
+from laneregression.msg import functionData, functionArray, point, clusterData
 import numpy as np
 import cv2
 import random
@@ -30,7 +30,7 @@ def draw_circles(points):
         cv2.circle(canvas, (points[i, 0], points[i, 1]), 1, (r, g, b), -1)
 
 
-def calcluate_distance_between_points(x1, y1, x2, y2):
+def calculuate_distance_between_points(x1, y1, x2, y2):
     x_diff = abs(x2 - x1)
     y_diff = abs(y2 - y1)
     return math.sqrt(x_diff**2 + y_diff**2)
@@ -53,7 +53,7 @@ def determine_cluster_start_end_points(cluster_with_points, number_of_cluster):
         cluster_start_end_points[0, 1, i] = start_y
         cluster_start_end_points[1, 1, i] = end_y
 
-        # determine x-value of min, max y-value
+        # determine x-value of min, max y-value (it is possible that there are several points with same y-value, we want the middele point)
         start_x = 0
         start_x_counter = 0
         end_x = 0
@@ -84,8 +84,8 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
     cluster_only_solid_lines = []
     cluster_only_dashed_lines = []
     cluster_meta_data = []
-    x_diff_treshold = 35
-    y_diff_treshold = 350
+    x_diff_threshold = 35
+    y_diff_threshold = 350
 
     cluster = cluster_with_points
     start_end_points = cluster_start_end_points
@@ -109,7 +109,7 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
                 start_end_points[1, 1, k] - start_end_points[0, 1, i])
 
             # compare start and end point
-            if (x_diff_start_end < x_diff_treshold and y_diff_start_end < y_diff_treshold):
+            if (x_diff_start_end < x_diff_threshold and y_diff_start_end < y_diff_threshold):
                 # append cluster and adjust start end points
                 cluster[k] = np.append(cluster[k], cluster[i], 0)
                 del cluster[i]
@@ -121,7 +121,7 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
                 i = k + 1
 
             # compare end and start point
-            elif (x_diff_end_start < x_diff_treshold and y_diff_end_start < y_diff_treshold):
+            elif (x_diff_end_start < x_diff_threshold and y_diff_end_start < y_diff_threshold):
                 # append cluster and adjust start end points
                 cluster[k] = np.append(cluster[k], cluster[i], 0)
                 del cluster[i]
@@ -149,7 +149,7 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
 # sorts function points successively by looking for nearest neighbor (O(n^2))
 def sort_function_points_improved(points):
 
-    treshold_distance = 50
+    threshold_distance = 50
 
     number_of_points = int(points.size / 2)
     function_points_unsorted = np.reshape(points, (number_of_points, 2))
@@ -185,13 +185,13 @@ def sort_function_points_improved(points):
             y2 = function_points_unsorted[k, 1]
 
             # looks for neighbour with smallest distance
-            if calcluate_distance_between_points(x1, y1, x2, y2) < smallest_distance:
-                smallest_distance = calcluate_distance_between_points(
+            if calculuate_distance_between_points(x1, y1, x2, y2) < smallest_distance:
+                smallest_distance = calculuate_distance_between_points(
                     x1, y1, x2, y2)
                 index_point_smallest_distance = k
 
-        # treshold for distance
-        if smallest_distance > treshold_distance:
+        # threshold for distance
+        if smallest_distance > threshold_distance:
             function_points_sorted = np.append(
                 function_points_sorted, function_points_unsorted[index_point_smallest_distance, :].reshape(1, 2), axis=0)
             function_points_unsorted = np.delete(
@@ -240,7 +240,7 @@ def build_function(function_points_sorted):
     value_table[:, 1:] = function_points_sorted
     value_table[0, 0] = 0
     for i in range(1, number_of_points):
-        value_table[i, 0] = value_table[i-1, 0] + calcluate_distance_between_points(
+        value_table[i, 0] = value_table[i-1, 0] + calculuate_distance_between_points(
             value_table[i, 1], value_table[i, 2], value_table[i-1, 1], value_table[i-1, 2])
     # regression for x
     x_function = np.polyfit(value_table[:, 0], value_table[:, 1], poly_degree)
@@ -300,7 +300,8 @@ def get_order_of_lines(functions):
 
 
 
-
+# callback function
+####################################################
 def callback(data):
     # rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
     
@@ -311,41 +312,75 @@ def callback(data):
     all_functions = []
     all_meta = []
 
-    cluster = data.data.split(";")
-    number_of_cluster = len(cluster) - 1
+
+    # # draw points of raw cluster on canvas
+    # ####################################################
+    # cluster = data.data.split(";")
+    # number_of_cluster = len(cluster) - 1
+    
+    # # go through clusters
+    # for n in range(number_of_cluster):
+    #     fields = cluster[n].split(",")
+    #     number_of_points = int((len(fields) - 1) / 2)
+    #     points = np.zeros((number_of_points, 2))
+    #     cluster_y_value_min = 960
+    #     cluster_y_value_max = 0
+
+    #     # go through points of cluster
+    #     for i in range(len(fields) - 1):   # last field is empty
+    #         # x-value
+    #         if (i % 2 == 0):
+    #             points[(int(i/2)), 0] = fields[i]
+    #         # y-value
+    #         else:
+    #             points[(int((i-1)/2)), 1] = fields[i]
+    #             # find min und max y-value
+    #             if int(fields[i]) < cluster_y_value_min:
+    #                 cluster_y_value_min = int(fields[i])
+    #             elif int(fields[i]) > cluster_y_value_max:
+    #                 cluster_y_value_max = int(fields[i])
+
+    #     # convert string to int
+    #     points = points.astype(int)
+    #     # append points of current cluster to global list
+    #     cluster_with_points.append(points)
+
+    #     # draw point cloud of current raw cluster on canvas
+    #     draw_circles(points)
 
 
-    # draw points of raw cluster on canvas
-    ####################################################
-    # go through clusters
-    for n in range(number_of_cluster):
-        fields = cluster[n].split(",")
-        number_of_points = int((len(fields) - 1) / 2)
-        points = np.zeros((number_of_points, 2))
-        cluster_y_value_min = 960
-        cluster_y_value_max = 0
-
-        # go through points of cluster
-        for i in range(len(fields) - 1):   # last field is empty
-            # x-value
-            if (i % 2 == 0):
-                points[(int(i/2)), 0] = fields[i]
-            # y-value
-            else:
-                points[(int((i-1)/2)), 1] = fields[i]
-                # find min und max y-value
-                if int(fields[i]) < cluster_y_value_min:
-                    cluster_y_value_min = int(fields[i])
-                elif int(fields[i]) > cluster_y_value_max:
-                    cluster_y_value_max = int(fields[i])
-
-        # convert string to int
+    number_of_cluster = len(data.size)
+    
+    index = 0
+    for n in range(len(data.size)):
+        points = np.zeros((data.size[n], 2))
+        for i in range(data.size[n]):
+            points[i, 0] = int(data.points[index + i].x)
+            points[i, 1] = int(data.points[index + i].y)
+        index = index + data.size[n]
+        
         points = points.astype(int)
-        # append points of current cluster to global list
         cluster_with_points.append(points)
 
         # draw point cloud of current raw cluster on canvas
         draw_circles(points)
+
+    
+    # # go through clusters
+    # for n in range(len(cluster_raw)):
+    #     number_of_points = len(cluster_raw[n])
+    #     points = np.zeros((number_of_points, 2))
+    #     # go through points of cluster
+    #     for i in range(len(cluster_raw[n])):
+    #         if (i % 2 == 0):
+    #             points[(int(i/2)), 0] = cluster_raw[n][i].x
+    #         elif (i % 2 != 0):
+    #             points[(int((i-1)/2)), 1] = cluster_raw[n][i].y
+    #     # append points of current cluster to global list
+    #     cluster_with_points.append(points)
+
+    #     # draw point cloud of current raw cluster on canvas
+    #     draw_circles(points)
 
 
     
@@ -422,6 +457,7 @@ def callback(data):
     
     ####################################################
     # ROS topic
+    # includes koefficents of functions (#x(s) = as^2+bs+c, #y(s) = ds^2+es+f), meta information and position
     function_array = functionArray()
     
     # left lines
@@ -430,6 +466,7 @@ def callback(data):
         function_data = functionData()
         function_data.position = (p + 1)
         function_data.meta = all_meta[index]
+
         function_data.a = all_functions[index*2][0]
         function_data.d = all_functions[index*2+1][0]
         function_data.b = all_functions[index*2][1]
@@ -454,15 +491,105 @@ def callback(data):
 
         function_array.functions.append(function_data)
 
-    # send  message via ROS topic
-    talker(function_array.functions)
 
     
     
+    
+    #########################################################################################
+    # implementation in progress
+
+    functions = function_array.functions
+    right_border_line = None
+    left_border_line = None
+
+    # draw functions to canvas
+    #################################
+    canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
+
+    for i in range(len(functions)):
+
+        b, g, b = 127, 127, 0
+
+        if functions[i].position == 0:
+            right_border_line = functions[i]
+            b, g, b = 0, 255, 0
+        elif functions[i].position == 1:
+            left_border_line = functions[i]
+            b, g, b = 0, 255, 0
+
+        x_coefficient = [None] * 3
+        y_coefficient = [None] * 3
+        x_coefficient[0] = functions[i].a
+        x_coefficient[1] = functions[i].b
+        x_coefficient[2] = functions[i].c
+        y_coefficient[0] = functions[i].d
+        y_coefficient[1] = functions[i].e
+        y_coefficient[2] = functions[i].f
+        for m in range(-250, 1500, 2):                             
+            x = np.polyval(x_coefficient, m)
+            y = np.polyval(y_coefficient, m)
+            cv2.circle(canvas, (int(x), int(y)), 1, (b, g, b), -1)
+
+    # calculate ideal line
+    #################################
+    ideal_x_coefficient = [None] * 3
+    ideal_y_coefficient = [None] * 3
+    ideal_x_coefficient[0] = (right_border_line.a + left_border_line.a) / 2
+    ideal_x_coefficient[1] = (right_border_line.b + left_border_line.b) / 2
+    ideal_x_coefficient[2] = (right_border_line.c + left_border_line.c) / 2
+    ideal_y_coefficient[0] = (right_border_line.d + left_border_line.d) / 2
+    ideal_y_coefficient[1] = (right_border_line.e + left_border_line.e) / 2
+    ideal_y_coefficient[2] = (right_border_line.f + left_border_line.f) / 2
+    for m in range(-250, 1500, 2):                             
+        x = np.polyval(ideal_x_coefficient, m)
+        y = np.polyval(ideal_y_coefficient, m)
+        cv2.circle(canvas, (int(x), int(y)), 1, (0, 0, 255), -1)
+
+   
+   # determine offset
+    #################################
+    
+    #x(s) = as^2+bs+c
+    a = ideal_x_coefficient[0]
+    b = ideal_x_coefficient[1]
+    c = ideal_x_coefficient[2]
+    #y(s) = ds^2+es+f
+    d = ideal_y_coefficient[0]
+    e = ideal_y_coefficient[1]
+    f = ideal_y_coefficient[2] - picHeight      # substract picHeight to find intersection with lower picture border, not the zeropoints
+
+    # determine value of t at intersection with lower picture border -> quadratic formula (Mitternachtformel) 
+    # quadratic formula (Mitternachtsformel)
+    discriminant = math.sqrt(e**2 - (4 * d * f))
+    
+    t_1 = (-e + discriminant) / (2*d)
+    t_2 = (-e - discriminant) / (2*d)
+    
+    # determine x value for t value
+    x_1 = a*t_1**2 + b*t_1 + c
+    x_2 = a*t_2**2 - b*t_2 + c
+    
+    # offset_1 = np.polyval(ideal_x_coefficient, x_1) - (picWidth/2)
+    offset_2 = np.polyval(ideal_x_coefficient, x_2) - (picWidth/2)
+    # print(offset_1)
+    print("offset: " + str(offset_2))
+    
+
+
+    # draw position of truck
+    #################################
+    cv2.line(canvas, (int(picWidth/2), picHeight),
+                 (int(picWidth/2), picHeight - 20), (0, 0, 0), 5)
+    
+
+    # send  message via ROS topic
+    # talker(function_array.functions)
+    talker(offset_2)
+    
     ####################################################
     # display canvas window
-    cv2.imshow("points", canvas)
-    cv2.imwrite('result.png', canvas)
+    cv2.imshow("laneregression", canvas)
+    # cv2.imwrite('result.png', canvas)
     cv2.waitKey(2000)
     # cv2.destroyAllWindows()
 
@@ -478,14 +605,14 @@ def listener():
     # run simultaneously.
     rospy.init_node('laneregression', anonymous=True)
 
-    rospy.Subscriber("lanedetection_cluster", String, callback)
+    rospy.Subscriber("lanedetection_cluster", clusterData, callback)
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
 
 
 def talker(data_function):
-    pub = rospy.Publisher('laneregression_functions', functionArray, queue_size=10)
+    pub = rospy.Publisher('laneregression_functions', Float32, queue_size=10)
     # rospy.init_node('talker_function', anonymous=True)
     rate = rospy.Rate(10)  # hz
     if not rospy.is_shutdown():
