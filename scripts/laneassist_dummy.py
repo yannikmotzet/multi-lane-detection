@@ -18,14 +18,56 @@ UDP_PORT = 10002
 
 
 
+UDP_IP = "192.168.0.90"
+UDP_PORT = 10002
+
+
+# Initialisierung des Reglers - Initialization of the controller
+class P_Controller:
+    def init_controller(self):		
+            self.Kp = 0.5
+            # self.offset = 0.0
+            self.L_wheelbase = 325
+            self.g_acceleration = 9.81      # [m/s^2] - acceleration of gravity
+            self.speed_v = 0.0
+            self.R_Curve = 0.0
+            self.Setpoint = 0.0
+            self.P_element = 0.0
+            self.Steering_Angle = 0.0
+
+# Berechnung des P-Glieds - Calculation of the proportional element
+    def calc_controller(self, offset):
+            self.P_element = self.Kp * offset				                # Kp: Verstaerkungsfaktor - gain factor
+            return self.P_element
+
+# Berechnung des Lenkwinkels - Calculation of the steering angle
+            self.R_Curve = ((self.speed_v)**2/self.g_acceleration)/1000			# [(m/s)^2/(m/s^2)=m]/1000 = [mm] - curve radius			
+            self.Steering_Angle = self.L_wheelbase/self.R_Curve					# [grad]
+
+# Berechnung des Reglerwertes - Calculation of the Controller value
+            if self.offset < 0:
+                self.Steering_Angle > 0
+                print("steering correction to the left")
+            elif self.offset == 0:
+                self.Steering_Angle = 0
+                print("on ideal line")
+            else:
+                self.Steering_Angle < 0
+                print("steering correction to the right")
+
+
+
 def callback(data):
     rospy.loginfo("offset: " + str(int(data.data)))
 
     offset = data.data
-    
-    # p regulator
-    steering_angle = 0.15 * offset
-    # TODO PID -> steering angle
+
+    controller = P_Controller()
+    controller.init_controller()
+    steering_angle = controller.calc_controller(offset)
+
+    print(steering_angle)
+
 
     # build content for UDP message
     message = "STEER,1," + str(steering_angle)
@@ -54,3 +96,8 @@ def listener():
 
 if __name__ == '__main__':
     listener()
+    
+    
+
+ 
+
