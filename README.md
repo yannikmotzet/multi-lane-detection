@@ -1,9 +1,15 @@
+## About Project
+author: Yannik Motzet (TIT17)
+dummy lanedetection retrieves points from files and publishes data
+laneregression determines functions for each line, calculates an ideal line and calculates an offset, publishes offset
+dummy laneassist takes the offset and calculates an steering angle, sends steering angle via UDP message to steering control unit
+
+this project will be further developed in the repo lane_keeping_assist
+
+
 ## How to clone
 * clone in your ROS workspace: ``` ~/catkin_ws/scr$: git clone https://gitlab.com/zfinnolab/lane-detection-assist/laneregression.git ```
 
-## Get sample video of Truck Maker
-* [Spurerkennungssimulation.avi](https://drive.google.com/open?id=1Fd3jdyYO9kUJk1QslhRScMUqpeO-pjwe)
-* Save in: ``` ~/catkin_ws/scr/laneregression$ ```
 
 ## How to build
 * ``` ~/catkin_ws$: source /opt/ros/melodic/setup.bash ```
