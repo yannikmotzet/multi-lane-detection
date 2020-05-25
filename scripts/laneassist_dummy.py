@@ -13,11 +13,7 @@ __version__ = '0.1.0'
 __email__ = 'author@email.com'
 __status__ = 'in development'
 
-UDP_IP = "192.168.0.90"
-UDP_PORT = 10002
-
-
-
+# IP and Port of Steering control unit (Arduino Mega / IPG TruckMaker)
 UDP_IP = "192.168.0.90"
 UDP_PORT = 10002
 
@@ -27,7 +23,7 @@ class P_Controller:
     def init_controller(self):		
             self.Kp = 0.5
             # self.offset = 0.0
-            self.L_wheelbase = 325
+            self.L_wheelbase = 325          # [mm]
             self.g_acceleration = 9.81      # [m/s^2] - acceleration of gravity
             self.speed_v = 0.0
             self.R_Curve = 0.0
@@ -62,6 +58,8 @@ def callback(data):
 
     offset = data.data
 
+    # PID-Controller
+    ####################################
     controller = P_Controller()
     controller.init_controller()
     steering_angle = controller.calc_controller(offset)
@@ -69,6 +67,8 @@ def callback(data):
     print(steering_angle)
 
 
+    # UDP Message
+    ####################################
     # build content for UDP message
     message = "STEER,1," + str(steering_angle)
     message_udp = str.encode(message)

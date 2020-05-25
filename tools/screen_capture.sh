@@ -1,4 +1,7 @@
 #!/bin/sh
+# author: Yannik Motzet (TIT17)
+# email: yannik.motzet@outlook.com
+
 # simple script which captures desktop screen and sends it to /dev/video0
 # manual: https://superuser.com/questions/411897/using-desktop-as-fake-webcam-on-linux
 # requirements:
