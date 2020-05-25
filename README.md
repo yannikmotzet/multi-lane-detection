@@ -1,6 +1,10 @@
 ## How to clone
 * clone in your ROS workspace: ``` ~/catkin_ws/scr$: git clone https://gitlab.com/zfinnolab/lane-detection-assist/laneregression.git ```
 
+## Get sample video of Truck Maker
+* [Spurerkennungssimulation.avi](https://drive.google.com/open?id=1Fd3jdyYO9kUJk1QslhRScMUqpeO-pjwe)
+* Save in: ``` ~/catkin_ws/scr/laneregression$ ```
+
 ## How to build
 * ``` ~/catkin_ws$: source /opt/ros/melodic/setup.bash ```
 * ``` ~/catkin_ws$: source devel/setup.bash ```
@@ -11,8 +15,8 @@ start roscore master:
 * ``` ~/catkin_ws$: roscore ```
 
 for each step open new terminal and paste ``` source devel/setup.bash ``` in ``` /catkin_ws$ ```
-* ``` ~/catkin_ws/src/laneregression$: rosrun laneregression lanedetection_dummy.py ``` (talker simuates interface from LaneDetection)
-* ``` ~/catkin_ws$: rosrun laneregression laneregression-node.py ```  (main node)
+* ``` ~/catkin_ws$: rosrun laneregression lanedetection_dummy.py ``` (talker simuates interface from LaneDetection)
+* ``` ~/catkin_ws$: rosrun laneregression laneregression_node.py ```  (main node)
 * ``` ~/catkin_ws$: rosrun laneregression laneassist_dummy.py ``` (listener simulates interface to LaneAssist)
 
 

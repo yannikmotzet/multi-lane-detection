@@ -6,13 +6,16 @@ import cv2
 import random
 import math
 import socket
-# import control
 
 __author__ = 'author'
 __copyright__ = 'Copyright 2020, ZF DHBW Innovation Lab'
 __version__ = '0.1.0'
 __email__ = 'author@email.com'
 __status__ = 'in development'
+
+UDP_IP = "192.168.0.90"
+UDP_PORT = 10002
+
 
 
 UDP_IP = "192.168.0.90"
@@ -72,10 +75,9 @@ def callback(data):
 
     # create socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
+    
     # send UDP message
     sock.sendto(message_udp, (UDP_IP, UDP_PORT))
-
     
     
 def listener():
