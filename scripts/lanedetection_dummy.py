@@ -2,24 +2,24 @@
 import rospy
 from std_msgs.msg import String
 from geometry_msgs.msg import Point
-from lane_keeping_assist.msg import clusterData
+from lane_keeping_assist.msg import cluster_data
 import os
 
 def talker():
-    pub = rospy.Publisher('lanedetection_cluster', clusterData, queue_size=10)
+    pub = rospy.Publisher('cluster_data', cluster_data, queue_size=10)
     rospy.init_node('lanedetection_dummy', anonymous=True)
     rate = rospy.Rate(0.5) #hz
 
     while not rospy.is_shutdown():
         # print(os.getcwd())
-        file_cluster = open("./src/laneregression/scripts/all_cluster", "r")
-        # file_cluster = open("/home/zflab/catkin_ws/src/laneregression/scripts/all_cluster", "r")
+        # file_cluster = open("./src/laneregression/scripts/all_cluster", "r")
+        file_cluster = open("/home/zflab/catkin_ws/src/laneregression/scripts/all_cluster", "r")
         # file_cluster = open("./scripts/all_cluster_without_perspective_transformation", "r")      
 
         for line in file_cluster:
             # rospy.loginfo(topic_string)    
 
-            all_cluster = clusterData()
+            all_cluster = cluster_data()
             
             string_cluster = line.split(";")            
 

@@ -53,7 +53,7 @@ find_package(catkin REQUIRED COMPONENTS
    FILES
    functionData.msg
    functionArray.msg 
-   clusterData.msg
+   cluster_data.msg
  )
 
 ## Generate services in the 'srv' folder

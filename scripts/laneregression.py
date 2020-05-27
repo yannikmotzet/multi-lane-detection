@@ -2,7 +2,7 @@
 import rospy
 from std_msgs.msg import String, Float32
 from geometry_msgs.msg import Point
-from lane_keeping_assist.msg import functionData, functionArray, clusterData
+from lane_keeping_assist.msg import functionData, functionArray, cluster_data
 import numpy as np
 import cv2
 import random
@@ -313,45 +313,10 @@ def callback(data):
     all_functions = []
     all_meta = []
 
-
-    # # draw points of raw cluster on canvas
-    # ####################################################
-    # cluster = data.data.split(";")
-    # number_of_cluster = len(cluster) - 1
-    
-    # # go through clusters
-    # for n in range(number_of_cluster):
-    #     fields = cluster[n].split(",")
-    #     number_of_points = int((len(fields) - 1) / 2)
-    #     points = np.zeros((number_of_points, 2))
-    #     cluster_y_value_min = 960
-    #     cluster_y_value_max = 0
-
-    #     # go through points of cluster
-    #     for i in range(len(fields) - 1):   # last field is empty
-    #         # x-value
-    #         if (i % 2 == 0):
-    #             points[(int(i/2)), 0] = fields[i]
-    #         # y-value
-    #         else:
-    #             points[(int((i-1)/2)), 1] = fields[i]
-    #             # find min und max y-value
-    #             if int(fields[i]) < cluster_y_value_min:
-    #                 cluster_y_value_min = int(fields[i])
-    #             elif int(fields[i]) > cluster_y_value_max:
-    #                 cluster_y_value_max = int(fields[i])
-
-    #     # convert string to int
-    #     points = points.astype(int)
-    #     # append points of current cluster to global list
-    #     cluster_with_points.append(points)
-
-    #     # draw point cloud of current raw cluster on canvas
-    #     draw_circles(points)
-
-
     number_of_cluster = len(data.size)
     
+    # draw point cloud of raw cluster on canvas
+    ####################################################
     index = 0
     for n in range(len(data.size)):
         points = np.zeros((data.size[n], 2))
@@ -363,26 +328,7 @@ def callback(data):
         points = points.astype(int)
         cluster_with_points.append(points)
 
-        # draw point cloud of current raw cluster on canvas
         draw_circles(points)
-
-    
-    # # go through clusters
-    # for n in range(len(cluster_raw)):
-    #     number_of_points = len(cluster_raw[n])
-    #     points = np.zeros((number_of_points, 2))
-    #     # go through points of cluster
-    #     for i in range(len(cluster_raw[n])):
-    #         if (i % 2 == 0):
-    #             points[(int(i/2)), 0] = cluster_raw[n][i].x
-    #         elif (i % 2 != 0):
-    #             points[(int((i-1)/2)), 1] = cluster_raw[n][i].y
-    #     # append points of current cluster to global list
-    #     cluster_with_points.append(points)
-
-    #     # draw point cloud of current raw cluster on canvas
-    #     draw_circles(points)
-
 
     
     # find dashed/solid lines
@@ -415,10 +361,17 @@ def callback(data):
 
     # find function for each line
     ####################################################
+    reduce_points = False
     for c in range(int(len(cluster_with_solid_and_dashed_lines))):
-        # determine some points of cluster with Douglas-Peucker algorithm
-        function_points = cv2.approxPolyDP(
-            cluster_with_solid_and_dashed_lines[c], 2, False)
+        
+        # reduce points with polydp algorithm?
+        if reduce_points == True:
+            # determine some points of cluster with Douglas-Peucker algorithm
+            function_points = cv2.approxPolyDP(
+                cluster_with_solid_and_dashed_lines[c], 2, False)
+        else:
+            function_points = cluster_with_solid_and_dashed_lines[c].reshape(cluster_with_solid_and_dashed_lines[c].shape[0],1,2)
+        
         cv2.drawContours(canvas, function_points, -1, (0, 0, 255), 5)
         if len(function_points) < 3:
             print("warning: function of a line might be faulty due to too less function points")
@@ -577,15 +530,17 @@ def callback(data):
     
 
 
-    # draw position of truck
+    # draw position of truck + offset value
     #################################
     cv2.line(canvas, (int(picWidth/2), picHeight),
                  (int(picWidth/2), picHeight - 20), (0, 0, 0), 5)
+    cv2.putText(canvas, 'offset = ' + str(offset_2),( 20, picHeight - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 0)
+    
     
 
-    # send  message via ROS topic
-    # talker(function_array.functions)
-    talker(offset_2)
+#     # send  message via ROS topic
+#     talker(function_array.functions)
+#     talker(offset_2)
     
     ####################################################
     # display canvas window
@@ -606,7 +561,7 @@ def listener():
     # run simultaneously.
     rospy.init_node('laneregression', anonymous=True)
 
-    rospy.Subscriber("lanedetection_cluster", clusterData, callback)
+    rospy.Subscriber("cluster_data", cluster_data, callback)
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()

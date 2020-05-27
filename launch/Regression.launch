@@ -1,5 +1,0 @@
-<launch>
-
-    <node name="LaneRegression" pkg="laneregression" type="laneregression.py" />
-
-</launch>
