@@ -6,7 +6,8 @@
 
 ## Getting started
 ### How to clone
-* clone in your ROS workspace: ``` ~/catkin_ws/scr$: https://gitlab.com/zfinnolab/laneregression/laneregression ```
+* clone repository to your ROS workspace: ``` ~/catkin_ws/scr$: git clone https://gitlab.com/zfinnolab/laneregression/laneregression ```
+* clone Lane Detection to your ROS workspace: ```~/catkin_ws/scr$: git clone https://gitlab.com/zfinnolab/lane-detection-assist/detectionlane.git```
 
 
 ### How to build
@@ -17,14 +18,14 @@
 * ```~/catkin_ws/$: source devel/setup.bash ```
 
 run all (detection/regression/assist) with roslaunch
-* ```~/catkin_ws/$: roslaunch laneregression all.launch ```
+* ```~/catkin_ws/$: roslaunch lane_keeping_assist all.launch ```
 
 start single nodes manually:
 * start roscore: ```~/catkin_ws/$: roscore ```
 for each step open new terminal and first paste ``` source devel/setup.bash ``` in ``` /catkin_ws$ ```
-* dummy lanedetection: ``` ~/catkin_ws$: rosrun laneregression lanedetection_dummy.py ``` 
-* ``` ~/catkin_ws$: rosrun laneregression laneregression.py ```
-* ``` ~/catkin_ws$: rosrun laneregression laneassist.py ```
+* dummy lanedetection: ``` ~/catkin_ws$: rosrun lane_keeping_assist lanedetection_dummy.py ``` 
+* ``` ~/catkin_ws$: rosrun lane_keeping_assist laneregression.py ```
+* ``` ~/catkin_ws$: rosrun lane_keeping_assist laneassist.py ```
 
 
 ## Other things
