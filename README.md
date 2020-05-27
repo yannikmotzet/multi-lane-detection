@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Lane Keeping Assist
 
 ### Components
@@ -8,6 +9,20 @@
 ## Getting started
 ### How to clone
 * clone in your ROS workspace: ``` ~/catkin_ws/scr$: https://gitlab.com/zfinnolab/lane-detection-assist/lane-keeping-assist-2020 ```
+=======
+## About Project
+author: Yannik Motzet (TIT17)
+dummy lanedetection retrieves points from files and publishes data
+laneregression determines functions for each line, calculates an ideal line and calculates an offset, publishes offset
+dummy laneassist takes the offset and calculates an steering angle, sends steering angle via UDP message to steering control unit
+
+this project will be further developed in the repo lane_keeping_assist
+
+
+## How to clone
+* clone in your ROS workspace: ``` ~/catkin_ws/scr$: git clone https://gitlab.com/zfinnolab/lane-detection-assist/laneregression.git ```
+
+>>>>>>> ccdca0726feb59eeeb5468b4acecec3e4ce70499
 
 
 ### How to build
