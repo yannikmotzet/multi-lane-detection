@@ -1,4 +1,5 @@
 int8 position
+int16 x_position
 int8 meta
 float32 a
 float32 b

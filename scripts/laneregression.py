@@ -18,6 +18,7 @@ __status__ = 'in development'
 picHeight = 960
 picWidth = 1280
 truck_pos_x = int(picWidth / 2)
+track_width = 143
 poly_degree = 2
 canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
 data_function_collected = ""
@@ -278,7 +279,7 @@ def get_order_of_lines(functions):
         x_1 = a*t_1**2 + b*t_1 + c
         x_2 = a*t_2**2 + b*t_2 + c
 
-        lines_pos_x.append(x_2)
+        lines_pos_x.append(int(x_2))
     
     #sort lines_pos_x and get sorted index back
     index_sorted = sorted(range(len(lines_pos_x)), key=lines_pos_x.__getitem__)
@@ -294,7 +295,7 @@ def get_order_of_lines(functions):
     # reverse left_lines_index (truck_pos is anchor and you cound lines from right to left)
     left_lines_index.reverse()
 
-    return right_lines_index, left_lines_index
+    return right_lines_index, left_lines_index, lines_pos_x
 
 
 
@@ -315,7 +316,7 @@ def callback(data):
 
     number_of_cluster = len(data.size)
     
-    # draw point cloud of raw cluster on canvas
+    # write points of ROS message to lis
     ####################################################
     index = 0
     for n in range(len(data.size)):
@@ -328,7 +329,8 @@ def callback(data):
         points = points.astype(int)
         cluster_with_points.append(points)
 
-        draw_circles(points)
+        # draw raw points
+        # draw_circles(points)
 
     
     # find dashed/solid lines
@@ -369,6 +371,7 @@ def callback(data):
             # determine some points of cluster with Douglas-Peucker algorithm
             function_points = cv2.approxPolyDP(
                 cluster_with_solid_and_dashed_lines[c], 2, False)
+            # print("reduced number of points from " + str(cluster_with_solid_and_dashed_lines[c].shape[0]) + " to " + str(function_points.shape[0]))
         else:
             function_points = cluster_with_solid_and_dashed_lines[c].reshape(cluster_with_solid_and_dashed_lines[c].shape[0],1,2)
         
@@ -401,7 +404,7 @@ def callback(data):
 
     # sort lines by position
     ####################################################
-    index_right, index_left = get_order_of_lines(all_functions)
+    index_right, index_left, x_pos = get_order_of_lines(all_functions)
 
     # len(order_of_lines), len(meta), int(len(all_functions)/2) should be identical
     if len(all_meta) != int(len(all_functions)/2): print("warning: number of functions does not correspond to number of meta")
@@ -410,15 +413,17 @@ def callback(data):
     
     
     ####################################################
-    # ROS topic
+    # ROS message
     # includes koefficents of functions (#x(s) = as^2+bs+c, #y(s) = ds^2+es+f), meta information and position
     function_array = functionArray()
     
     # left lines
     for p in range(len(index_left)):
         index = index_left[p]
+
         function_data = functionData()
         function_data.position = (p + 1)
+        function_data.x_position = x_pos[index]
         function_data.meta = all_meta[index]
 
         function_data.a = all_functions[index*2][0]
@@ -433,9 +438,12 @@ def callback(data):
     # right lines
     for p in range(len(index_right)):
         index = index_right[p]
+
         function_data = functionData()
         function_data.position = p*(-1)
+        function_data.x_position = x_pos[index]
         function_data.meta = all_meta[index]
+
         function_data.a = all_functions[index*2][0]
         function_data.d = all_functions[index*2+1][0]
         function_data.b = all_functions[index*2][1]
@@ -445,12 +453,6 @@ def callback(data):
 
         function_array.functions.append(function_data)
 
-
-    
-    
-    
-    #########################################################################################
-    # implementation in progress
 
     functions = function_array.functions
     right_border_line = None
@@ -464,6 +466,7 @@ def callback(data):
 
         b, g, b = 127, 127, 0
 
+        # get right and left border line
         if functions[i].position == 0:
             right_border_line = functions[i]
             b, g, b = 0, 255, 0
@@ -484,65 +487,81 @@ def callback(data):
             y = np.polyval(y_coefficient, m)
             cv2.circle(canvas, (int(x), int(y)), 1, (b, g, b), -1)
 
-    # calculate ideal line
+    # calculate ideal line and offset
     #################################
-    ideal_x_coefficient = [None] * 3
-    ideal_y_coefficient = [None] * 3
-    ideal_x_coefficient[0] = (right_border_line.a + left_border_line.a) / 2
-    ideal_x_coefficient[1] = (right_border_line.b + left_border_line.b) / 2
-    ideal_x_coefficient[2] = (right_border_line.c + left_border_line.c) / 2
-    ideal_y_coefficient[0] = (right_border_line.d + left_border_line.d) / 2
-    ideal_y_coefficient[1] = (right_border_line.e + left_border_line.e) / 2
-    ideal_y_coefficient[2] = (right_border_line.f + left_border_line.f) / 2
-    for m in range(-250, 1500, 2):                             
-        x = np.polyval(ideal_x_coefficient, m)
-        y = np.polyval(ideal_y_coefficient, m)
-        cv2.circle(canvas, (int(x), int(y)), 1, (0, 0, 255), -1)
+    global track_width
+    # left and right line are in range
+    if 0.6 < right_border_line.x_position - left_border_line.x_position < track_width * 1.4:
+        ideal_x_coefficient = [None] * 3
+        ideal_y_coefficient = [None] * 3
+        ideal_x_coefficient[0] = (right_border_line.a + left_border_line.a) / 2
+        ideal_x_coefficient[1] = (right_border_line.b + left_border_line.b) / 2
+        ideal_x_coefficient[2] = (right_border_line.c + left_border_line.c) / 2
+        ideal_y_coefficient[0] = (right_border_line.d + left_border_line.d) / 2
+        ideal_y_coefficient[1] = (right_border_line.e + left_border_line.e) / 2
+        ideal_y_coefficient[2] = (right_border_line.f + left_border_line.f) / 2
+        for m in range(-250, 1500, 2):                             
+            x = np.polyval(ideal_x_coefficient, m)
+            y = np.polyval(ideal_y_coefficient, m)
+            cv2.circle(canvas, (int(x), int(y)), 1, (0, 0, 255), -1)
 
-   
-   # determine offset
-    #################################
-    
-    #x(s) = as^2+bs+c
-    a = ideal_x_coefficient[0]
-    b = ideal_x_coefficient[1]
-    c = ideal_x_coefficient[2]
-    #y(s) = ds^2+es+f
-    d = ideal_y_coefficient[0]
-    e = ideal_y_coefficient[1]
-    f = ideal_y_coefficient[2] - picHeight      # substract picHeight to find intersection with lower picture border, not the zeropoints
+        # determine offset
+        #x(s) = as^2+bs+c
+        a = ideal_x_coefficient[0]
+        b = ideal_x_coefficient[1]
+        c = ideal_x_coefficient[2]
+        #y(s) = ds^2+es+f
+        d = ideal_y_coefficient[0]
+        e = ideal_y_coefficient[1]
+        f = ideal_y_coefficient[2] - picHeight      # substract picHeight to find intersection with lower picture border, not the zeropoints
 
-    # determine value of t at intersection with lower picture border -> quadratic formula (Mitternachtformel) 
-    # quadratic formula (Mitternachtsformel)
-    discriminant = math.sqrt(e**2 - (4 * d * f))
-    
-    t_1 = (-e + discriminant) / (2*d)
-    t_2 = (-e - discriminant) / (2*d)
-    
-    # determine x value for t value
-    x_1 = a*t_1**2 + b*t_1 + c
-    x_2 = a*t_2**2 - b*t_2 + c
-    
-    # offset_1 = np.polyval(ideal_x_coefficient, x_1) - (picWidth/2)
-    offset_2 = np.polyval(ideal_x_coefficient, x_2) - (picWidth/2)
-    # print(offset_1)
-    print("offset: " + str(offset_2))
-    
+        # determine value of t at intersection with lower picture border -> quadratic formula (Mitternachtformel) 
+        # quadratic formula (Mitternachtsformel)
+        discriminant = math.sqrt(e**2 - (4 * d * f))
+        
+        t_1 = (-e - discriminant) / (2*d)
+        # t_2 = (-e + discriminant) / (2*d)
+        
+        # determine x value for t value
+        x_1 = np.polyval(ideal_x_coefficient, t_1)
+        # x_2 = np.polyval(ideal_x_coefficient, t_2)
+        
+        offset_1 = x_1 - (truck_pos_x)
+        # offset_2 = x_2 - (truck_pos_x)
+        offset = offset_1
+
+    # only right line is in range
+    elif (track_width/2)*0.8 < abs(right_border_line.x_position - truck_pos_x) < (track_width/2)*1.2:
+        offset = right_border_line.x_position - (int(track_width/2)) - truck_pos_x
+        cv2.line(canvas, (int(picWidth/2) + offset, picHeight),
+                 (int(picWidth/2) + offset, picHeight - 20), (0, 0, 255), 5)
+    # only left line is in range
+    elif (track_width/2)*0.8 < abs(left_border_line.x_position - truck_pos_x) < (track_width/2)*1.2:
+        offset = right_border_line.x_position - (int(track_width/2)) - truck_pos_x
+        cv2.line(canvas, (int(picWidth/2) + offset, picHeight),
+            (int(picWidth/2) + offset, picHeight - 20), (0, 0, 255), 5)
+    # neither left nor right lane is in range -> orient on right lane
+    else:
+        offset = right_border_line.x_position - (int(track_width/2)) - truck_pos_x
+        cv2.line(canvas, (int(picWidth/2) + offset, picHeight),
+            (int(picWidth/2) + offset, picHeight - 20), (0, 0, 255), 5)
 
 
     # draw position of truck + offset value
     #################################
     cv2.line(canvas, (int(picWidth/2), picHeight),
                  (int(picWidth/2), picHeight - 20), (0, 0, 0), 5)
-    cv2.putText(canvas, 'offset = ' + str(offset_2),( 20, picHeight - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 0)
+    cv2.putText(canvas, 'offset = ' + str(offset),( 20, picHeight - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 0)
     
     
 
-#     # send  message via ROS topic
-#     talker(function_array.functions)
-#     talker(offset_2)
+    # send offset via ROS topic
+    #################################
+    talker(function_array.functions)
+    talker(offset)
+
     
-    ####################################################
+    #################################
     # display canvas window
     cv2.imshow("laneregression", canvas)
     # cv2.imwrite('result.png', canvas)
@@ -572,7 +591,7 @@ def talker(data_function):
     # rospy.init_node('talker_function', anonymous=True)
     rate = rospy.Rate(10)  # hz
     if not rospy.is_shutdown():
-        rospy.loginfo(data_function)
+        # rospy.loginfo(data_function)
         pub.publish(data_function)
         rate.sleep()
 
