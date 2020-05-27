@@ -1,26 +1,47 @@
-## How to clone
-* clone in your ROS workspace: ``` ~/catkin_ws/scr$: git clone https://gitlab.com/zfinnolab/lane-detection-assist/laneregression.git ```
+# Lane Keeping Assist
 
-## Get sample video of Truck Maker
-* [Spurerkennungssimulation.avi](https://drive.google.com/open?id=1Fd3jdyYO9kUJk1QslhRScMUqpeO-pjwe)
-* Save in: ``` ~/catkin_ws/scr/laneregression$ ```
+### Components
+* Lane Detection (current editor: Fabian Hauck)
+* Lane Regression (current editor: [Yannik Motzet (TIT17)](mailto:yannik.motzet@outlook.com))
+* Lane Assist (current editor: Inci Sahin)
 
-## How to build
+## Getting started
+### How to clone
+* clone in your ROS workspace: ``` ~/catkin_ws/scr$: https://gitlab.com/zfinnolab/lane-detection-assist/lane-keeping-assist-2020 ```
+
+
+### How to build
 * ``` ~/catkin_ws$: source /opt/ros/melodic/setup.bash ```
 * ``` ~/catkin_ws$: source devel/setup.bash ```
 * build the project: ``` ~/catkin_ws$: catkin_make ```
 
-## How to run
-start roscore master:
-* ``` ~/catkin_ws$: roscore ```
+### How to run
+* ```~/catkin_ws/$: source devel/setup.bash ```
 
-for each step open new terminal and paste ``` source devel/setup.bash ``` in ``` /catkin_ws$ ```
-* ``` ~/catkin_ws$: rosrun laneregression lanedetection_dummy.py ``` (talker simuates interface from LaneDetection)
-* ``` ~/catkin_ws$: rosrun laneregression laneregression_node.py ```  (main node)
-* ``` ~/catkin_ws$: rosrun laneregression laneassist_dummy.py ``` (listener simulates interface to LaneAssist)
+run all with roslaunch
+* ```~/catkin_ws/$: roslaunch lane-keeping-assist detection_regression_assist ```
+
+or start single nodes manually:
+* start roscore: ```~/catkin_ws/$: roscore ```
+for each step open new terminal and first paste ``` source devel/setup.bash ``` in ``` /catkin_ws$ ```
+* ``` ~/catkin_ws$: rosrun lane-keeping-assist lanedetection ``` 
+* ``` ~/catkin_ws$: rosrun lane-keeping-assist laneregression.py ```
+* ``` ~/catkin_ws$: rosrun lane-keeping-assist laneassist.py ```
 
 
-## How LaneRegressions works
+## Other things
+### Get sample video of Truck Maker
+* [Spurerkennungssimulation.avi](https://drive.google.com/open?id=1Fd3jdyYO9kUJk1QslhRScMUqpeO-pjwe)
+* Save in: ``` ~/catkin_ws/scr/lane-keeping-assist-2020 ```
+
+### How to: IPGMovie --> webcam
+* use Capture Card (Mira Box)
+* use [v4l2loopback](https://github.com/umlaeute/v4l2loopback) + [OBS](https://obsproject.com/de) (install v4l2loopback, install OBS, run ```sudo modprobe v4l2loopback```, in OBS: tools -> V4L2 Video output)
+* use [v4l2loopback](https://github.com/umlaeute/v4l2loopback) + shell script (install  v4l2loopback, run ```./tools/screen_capture.sh```)
+
+
+## How it works
+### How LaneRegressions works (not updated yet)
 
 preliminary work:
 * in LaneDetection an algorithm for Persepctive Transformation was implemented (to get the top-down view)
@@ -40,7 +61,7 @@ LaneRegression:
 LaneAssist dummy subscriber:
 * subscribe to topic and parse information
 
-## Result example
+#### Result example
 Here is an example image of one frame.
 * black lines: raw cluster
 * blue points: start and end points of raw cluster 

@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import rospy
 from std_msgs.msg import String, Float32
-from laneregression.msg import functionData, functionArray, point, clusterData
+from geometry_msgs.msg import Point
+from lane_keeping_assist.msg import functionData, functionArray, clusterData
 import numpy as np
 import cv2
 import random

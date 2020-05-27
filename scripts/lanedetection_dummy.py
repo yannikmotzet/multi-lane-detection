@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import rospy
 from std_msgs.msg import String
-from laneregression.msg import point, clusterData
+from geometry_msgs.msg import Point
+from lane_keeping_assist.msg import clusterData
 import os
 
 def talker():
@@ -29,9 +30,10 @@ def talker():
                 all_cluster.size.append(int((len(string_points) - 1) / 2))
                 
                 for j in range(0, len(string_points) - 1, 2):
-                    single_point = point()
+                    single_point = Point()
                     single_point.x = int(string_points[j])
                     single_point.y = int(string_points[j+1])
+                    single_point.z = 0
                     all_cluster.points.append(single_point)
 
 

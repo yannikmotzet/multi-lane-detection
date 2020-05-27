@@ -1,2 +1,2 @@
 int32[] size
-point[] points
+geometry_msgs/Point[] points

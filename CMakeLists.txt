@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(laneregression)
+project(lane_keeping_assist)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
   std_msgs
+  geometry_msgs
   message_generation
 )
 
@@ -51,10 +52,8 @@ find_package(catkin REQUIRED COMPONENTS
  add_message_files(
    FILES
    functionData.msg
-   functionArray.msg
-   point.msg   
+   functionArray.msg 
    clusterData.msg
-#   Message2.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -75,6 +74,7 @@ find_package(catkin REQUIRED COMPONENTS
  generate_messages(
    DEPENDENCIES
    std_msgs
+   geometry_msgs
  )
 
 ################################################
@@ -211,5 +211,5 @@ include_directories(
 # catkin_add_nosetests(test)
 
 
-add_executable(lanedetection src/lanedetection.cpp)
-target_link_libraries(lanedetection ${catkin_LIBRARIES})
+add_executable(lane_keeping_assist src/lanedetection.cpp)
+target_link_libraries(lane_keeping_assist ${catkin_LIBRARIES})
