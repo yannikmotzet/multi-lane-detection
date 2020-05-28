@@ -270,14 +270,14 @@ def get_order_of_lines(functions):
         f = functions[i+1][2] - (picHeight)     # substract picHeight to find intersection with lower picture border, not the zeropoints
 
         # determine value of t at intersection with lower picture border -> quadratic formula
-        discriminant = math.sqrt(e**2 - (4 * d * f))
+        discriminant = math.sqrt((e**2) - (4 * d * f))
 
         t_1 = (-e + discriminant) / (2*d)
         t_2 = (-e - discriminant) / (2*d)
 
         # determine x value for t value
-        x_1 = a*t_1**2 + b*t_1 + c
-        x_2 = a*t_2**2 + b*t_2 + c
+        x_1 = (a*(t_1**2)) + (b*t_1) + c
+        x_2 = (a*(t_2**2)) + (b*t_2) + c
 
         lines_pos_x.append(int(x_2))
     
@@ -315,8 +315,9 @@ def callback(data):
     all_meta = []
 
     number_of_cluster = len(data.size)
+
     
-    # write points of ROS message to lis
+    # write points of ROS message to list
     ####################################################
     index = 0
     for n in range(len(data.size)):
@@ -330,7 +331,7 @@ def callback(data):
         cluster_with_points.append(points)
 
         # draw raw points
-        # draw_circles(points)
+        draw_circles(points)
 
     
     # find dashed/solid lines
@@ -460,7 +461,6 @@ def callback(data):
 
     # draw functions to canvas
     #################################
-    canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
 
     for i in range(len(functions)):
 
@@ -557,7 +557,6 @@ def callback(data):
 
     # send offset via ROS topic
     #################################
-    talker(function_array.functions)
     talker(offset)
 
     
