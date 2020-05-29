@@ -89,7 +89,7 @@ def listener():
     # run simultaneously.
     rospy.init_node('laneassist_dummy', anonymous=True)
 
-    rospy.Subscriber("laneregression_functions", Float32, callback)
+    rospy.Subscriber("laneregression_offset", Float32, callback)
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()

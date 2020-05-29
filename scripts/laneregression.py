@@ -15,7 +15,8 @@ __email__ = 'yannik.motzet@outlook.com'
 __status__ = 'in development'
 
 
-picHeight = 960
+# picHeight = 960
+picHeight = 660
 picWidth = 1280
 truck_pos_x = int(picWidth / 2)
 track_width = 143
@@ -25,9 +26,9 @@ data_function_collected = ""
 
 
 def draw_circles(points):
-    r, g, b = random.randint(0, 255), random.randint(
-        0, 255), random.randint(0, 255)
-    # r, g, b = 0, 0, 0
+    # r, g, b = random.randint(0, 255), random.randint(
+    #     0, 255), random.randint(0, 255)
+    r, g, b = 0, 0, 0
     for i in range(int(points.size / 2)):
         cv2.circle(canvas, (points[i, 0], points[i, 1]), 1, (r, g, b), -1)
 
@@ -298,8 +299,10 @@ def get_order_of_lines(functions):
     return right_lines_index, left_lines_index, lines_pos_x
 
 
-
-
+######################################################################################################################
+######################################################################################################################
+######################################################################################################################
+######################################################################################################################
 
 
 # callback function
@@ -339,14 +342,14 @@ def callback(data):
     # find start and end points of cluster
     cluster_start_end_points = determine_cluster_start_end_points(
         cluster_with_points, number_of_cluster)
-    # draw start and end point of each cluster
-    for b in range(number_of_cluster):
-        # start point
-        cv2.circle(canvas, (int(cluster_start_end_points[0, 0, b]), int(
-            cluster_start_end_points[0, 1, b])), 5, (255, 0, 0), -1)
-        # end point
-        cv2.circle(canvas, (int(cluster_start_end_points[1, 0, b]), int(
-            cluster_start_end_points[1, 1, b])), 5, (255, 0, 0), -1)
+    # # draw start and end point of each cluster
+    # for b in range(number_of_cluster):
+    #     # start point
+    #     cv2.circle(canvas, (int(cluster_start_end_points[0, 0, b]), int(
+    #         cluster_start_end_points[0, 1, b])), 5, (255, 0, 0), -1)
+    #     # end point
+    #     cv2.circle(canvas, (int(cluster_start_end_points[1, 0, b]), int(
+    #         cluster_start_end_points[1, 1, b])), 5, (255, 0, 0), -1)
 
     # find cluster with solid lines + dashed lines (line cluster)
     cluster_with_solid_and_dashed_lines, cluster_meta_data = determine_cluster_with_solid_and_dashed_lines(
@@ -355,7 +358,7 @@ def callback(data):
     for l in cluster_meta_data:
         all_meta.append(l)
 
-    # draw new cluster with solid lines + dashed lines on canvas
+    # # draw new cluster with solid lines + dashed lines on canvas
     # for u in range(int(len(cluster_with_solid_and_dashed_lines))):
     #     draw_circles(cluster_with_solid_and_dashed_lines[u])
 
@@ -364,7 +367,7 @@ def callback(data):
 
     # find function for each line
     ####################################################
-    reduce_points = False
+    reduce_points = True
     for c in range(int(len(cluster_with_solid_and_dashed_lines))):
         
         # reduce points with polydp algorithm?
@@ -459,9 +462,9 @@ def callback(data):
     right_border_line = None
     left_border_line = None
 
+
     # draw functions to canvas
     #################################
-
     for i in range(len(functions)):
 
         b, g, b = 127, 127, 0
@@ -556,7 +559,7 @@ def callback(data):
     
 
     # send offset via ROS topic
-    #################################
+    ################################
     talker(offset)
 
     
@@ -564,7 +567,7 @@ def callback(data):
     # display canvas window
     cv2.imshow("laneregression", canvas)
     # cv2.imwrite('result.png', canvas)
-    cv2.waitKey(2000)
+    cv2.waitKey(1)
     # cv2.destroyAllWindows()
 
 
@@ -586,7 +589,7 @@ def listener():
 
 
 def talker(data_function):
-    pub = rospy.Publisher('laneregression_functions', Float32, queue_size=10)
+    pub = rospy.Publisher('laneregression_offset', Float32, queue_size=10)
     # rospy.init_node('talker_function', anonymous=True)
     rate = rospy.Rate(10)  # hz
     if not rospy.is_shutdown():
