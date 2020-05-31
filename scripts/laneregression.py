@@ -18,19 +18,25 @@ __status__ = 'in development'
 # picHeight = 960
 picHeight = 660
 picWidth = 1280
-truck_pos_x = int(picWidth / 2)
 track_width = 143
 poly_degree = 2
+reduce_raw_points = False
+dashed_y_distance = 150
+dashed_x_distance = 350
+
+truck_pos_x = int(picWidth / 2)
 canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
 data_function_collected = ""
 
 
+
+
 def draw_circles(points):
-    # r, g, b = random.randint(0, 255), random.randint(
+    # b, g, r = random.randint(0, 255), random.randint(
     #     0, 255), random.randint(0, 255)
-    r, g, b = 0, 0, 0
+    b, g, r = 0, 0, 0
     for i in range(int(points.size / 2)):
-        cv2.circle(canvas, (points[i, 0], points[i, 1]), 1, (r, g, b), -1)
+        cv2.circle(canvas, (points[i, 0], points[i, 1]), 1, (b, g, r), -1)
 
 
 def calculuate_distance_between_points(x1, y1, x2, y2):
@@ -87,8 +93,8 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
     cluster_only_solid_lines = []
     cluster_only_dashed_lines = []
     cluster_meta_data = []
-    x_diff_threshold = 35
-    y_diff_threshold = 350
+    global dashed_y_distance
+    global dashed_x_distance
 
     cluster = cluster_with_points
     start_end_points = cluster_start_end_points
@@ -112,7 +118,7 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
                 start_end_points[1, 1, k] - start_end_points[0, 1, i])
 
             # compare start and end point
-            if (x_diff_start_end < x_diff_threshold and y_diff_start_end < y_diff_threshold):
+            if (x_diff_start_end < dashed_y_distance and y_diff_start_end < dashed_x_distance):
                 # append cluster and adjust start end points
                 cluster[k] = np.append(cluster[k], cluster[i], 0)
                 del cluster[i]
@@ -124,7 +130,7 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
                 i = k + 1
 
             # compare end and start point
-            elif (x_diff_end_start < x_diff_threshold and y_diff_end_start < y_diff_threshold):
+            elif (x_diff_end_start < dashed_y_distance and y_diff_end_start < dashed_x_distance):
                 # append cluster and adjust start end points
                 cluster[k] = np.append(cluster[k], cluster[i], 0)
                 del cluster[i]
@@ -299,6 +305,8 @@ def get_order_of_lines(functions):
     return right_lines_index, left_lines_index, lines_pos_x
 
 
+
+
 ######################################################################################################################
 ######################################################################################################################
 ######################################################################################################################
@@ -310,8 +318,8 @@ def get_order_of_lines(functions):
 def callback(data):
     # rospy.loginfo(rospy.get_caller_id() + "I heard %s", data.data)
     
-    # clusters
     global canvas
+    global reduce_raw_points
     canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
     cluster_with_points = []
     all_functions = []
@@ -322,19 +330,29 @@ def callback(data):
     
     # write points of ROS message to list
     ####################################################
+    # data.size has information about length of the single clusters
+    # data.points contains all points of cluster
     index = 0
     for n in range(len(data.size)):
+        
         points = np.zeros((data.size[n], 2))
         for i in range(data.size[n]):
-            points[i, 0] = int(data.points[index + i].x)
-            points[i, 1] = int(data.points[index + i].y)
+            points[i, 0] = data.points[index + i].x
+            points[i, 1] = data.points[index + i].y
         index = index + data.size[n]
-        
+
+        if reduce_raw_points == True:
+            if points.shape[0] > 100:
+                reduced_points = cv2.approxPolyDP(points, 2, False)
+                print("reduced number of points from " + str(points.shape[0]) + " to " + str(reduced_points.shape[0]))
+                points = reduced_points.reshape(reduced_points.shape[0],2)
+
         points = points.astype(int)
+
         cluster_with_points.append(points)
 
         # draw raw points
-        draw_circles(points)
+        # draw_circles(points)
 
     
     # find dashed/solid lines
@@ -342,14 +360,15 @@ def callback(data):
     # find start and end points of cluster
     cluster_start_end_points = determine_cluster_start_end_points(
         cluster_with_points, number_of_cluster)
-    # # draw start and end point of each cluster
-    # for b in range(number_of_cluster):
-    #     # start point
-    #     cv2.circle(canvas, (int(cluster_start_end_points[0, 0, b]), int(
-    #         cluster_start_end_points[0, 1, b])), 5, (255, 0, 0), -1)
-    #     # end point
-    #     cv2.circle(canvas, (int(cluster_start_end_points[1, 0, b]), int(
-    #         cluster_start_end_points[1, 1, b])), 5, (255, 0, 0), -1)
+
+    # draw start and end point of each cluster
+    for b in range(number_of_cluster):
+        # start point
+        cv2.circle(canvas, (int(cluster_start_end_points[0, 0, b]), int(
+            cluster_start_end_points[0, 1, b])), 5, (255, 0, 0), -1)
+        # end point
+        cv2.circle(canvas, (int(cluster_start_end_points[1, 0, b]), int(
+            cluster_start_end_points[1, 1, b])), 5, (255, 0, 0), -1)
 
     # find cluster with solid lines + dashed lines (line cluster)
     cluster_with_solid_and_dashed_lines, cluster_meta_data = determine_cluster_with_solid_and_dashed_lines(
@@ -367,19 +386,21 @@ def callback(data):
 
     # find function for each line
     ####################################################
-    reduce_points = True
+    reduce_points = False
     for c in range(int(len(cluster_with_solid_and_dashed_lines))):
-        
         # reduce points with polydp algorithm?
         if reduce_points == True:
-            # determine some points of cluster with Douglas-Peucker algorithm
+            # reduce points of cluster with Douglas-Peucker algorithm
             function_points = cv2.approxPolyDP(
                 cluster_with_solid_and_dashed_lines[c], 2, False)
             # print("reduced number of points from " + str(cluster_with_solid_and_dashed_lines[c].shape[0]) + " to " + str(function_points.shape[0]))
         else:
             function_points = cluster_with_solid_and_dashed_lines[c].reshape(cluster_with_solid_and_dashed_lines[c].shape[0],1,2)
         
-        cv2.drawContours(canvas, function_points, -1, (0, 0, 255), 5)
+        # draw points 
+        b, g, r = random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
+        cv2.drawContours(canvas, function_points, -1, (b, g, r), 5)
+        
         if len(function_points) < 3:
             print("warning: function of a line might be faulty due to too less function points")
 
@@ -463,11 +484,11 @@ def callback(data):
     left_border_line = None
 
 
-    # draw functions to canvas
+    # detect border lines
     #################################
     for i in range(len(functions)):
 
-        b, g, b = 127, 127, 0
+        b, g, b = 255, 0, 0
 
         # get right and left border line
         if functions[i].position == 0:
@@ -477,6 +498,7 @@ def callback(data):
             left_border_line = functions[i]
             b, g, b = 0, 255, 0
 
+        # draw functions to canvas
         x_coefficient = [None] * 3
         y_coefficient = [None] * 3
         x_coefficient[0] = functions[i].a
@@ -485,69 +507,83 @@ def callback(data):
         y_coefficient[0] = functions[i].d
         y_coefficient[1] = functions[i].e
         y_coefficient[2] = functions[i].f
+        
         for m in range(-250, 1500, 2):                             
             x = np.polyval(x_coefficient, m)
             y = np.polyval(y_coefficient, m)
             cv2.circle(canvas, (int(x), int(y)), 1, (b, g, b), -1)
 
+    
     # calculate ideal line and offset
     #################################
     global track_width
-    # left and right line are in range
-    if 0.6 < right_border_line.x_position - left_border_line.x_position < track_width * 1.4:
-        ideal_x_coefficient = [None] * 3
-        ideal_y_coefficient = [None] * 3
-        ideal_x_coefficient[0] = (right_border_line.a + left_border_line.a) / 2
-        ideal_x_coefficient[1] = (right_border_line.b + left_border_line.b) / 2
-        ideal_x_coefficient[2] = (right_border_line.c + left_border_line.c) / 2
-        ideal_y_coefficient[0] = (right_border_line.d + left_border_line.d) / 2
-        ideal_y_coefficient[1] = (right_border_line.e + left_border_line.e) / 2
-        ideal_y_coefficient[2] = (right_border_line.f + left_border_line.f) / 2
-        for m in range(-250, 1500, 2):                             
-            x = np.polyval(ideal_x_coefficient, m)
-            y = np.polyval(ideal_y_coefficient, m)
-            cv2.circle(canvas, (int(x), int(y)), 1, (0, 0, 255), -1)
 
-        # determine offset
-        #x(s) = as^2+bs+c
-        a = ideal_x_coefficient[0]
-        b = ideal_x_coefficient[1]
-        c = ideal_x_coefficient[2]
-        #y(s) = ds^2+es+f
-        d = ideal_y_coefficient[0]
-        e = ideal_y_coefficient[1]
-        f = ideal_y_coefficient[2] - picHeight      # substract picHeight to find intersection with lower picture border, not the zeropoints
+    if right_border_line is not None and left_border_line is not None:
 
-        # determine value of t at intersection with lower picture border -> quadratic formula (Mitternachtformel) 
-        # quadratic formula (Mitternachtsformel)
-        discriminant = math.sqrt(e**2 - (4 * d * f))
-        
-        t_1 = (-e - discriminant) / (2*d)
-        # t_2 = (-e + discriminant) / (2*d)
-        
-        # determine x value for t value
-        x_1 = np.polyval(ideal_x_coefficient, t_1)
-        # x_2 = np.polyval(ideal_x_coefficient, t_2)
-        
-        offset_1 = x_1 - (truck_pos_x)
-        # offset_2 = x_2 - (truck_pos_x)
-        offset = offset_1
+        # left and right line are in range
+        if 0.6 < right_border_line.x_position - left_border_line.x_position < track_width * 1.4:
+            ideal_x_coefficient = [None] * 3
+            ideal_y_coefficient = [None] * 3
+            ideal_x_coefficient[0] = (right_border_line.a + left_border_line.a) / 2
+            ideal_x_coefficient[1] = (right_border_line.b + left_border_line.b) / 2
+            ideal_x_coefficient[2] = (right_border_line.c + left_border_line.c) / 2
+            ideal_y_coefficient[0] = (right_border_line.d + left_border_line.d) / 2
+            ideal_y_coefficient[1] = (right_border_line.e + left_border_line.e) / 2
+            ideal_y_coefficient[2] = (right_border_line.f + left_border_line.f) / 2
+            for m in range(-250, 1500, 2):                             
+                x = np.polyval(ideal_x_coefficient, m)
+                y = np.polyval(ideal_y_coefficient, m)
+                cv2.circle(canvas, (int(x), int(y)), 1, (0, 0, 255), -1)
 
-    # only right line is in range
-    elif (track_width/2)*0.8 < abs(right_border_line.x_position - truck_pos_x) < (track_width/2)*1.2:
+            # determine offset
+            #x(s) = as^2+bs+c
+            a = ideal_x_coefficient[0]
+            b = ideal_x_coefficient[1]
+            c = ideal_x_coefficient[2]
+            #y(s) = ds^2+es+f
+            d = ideal_y_coefficient[0]
+            e = ideal_y_coefficient[1]
+            f = ideal_y_coefficient[2] - picHeight      # substract picHeight to find intersection with lower picture border, not the zeropoints
+
+            # determine value of t at intersection with lower picture border -> quadratic formula (Mitternachtformel) 
+            # quadratic formula (Mitternachtsformel)
+            discriminant = math.sqrt(e**2 - (4 * d * f))
+            
+            t_1 = (-e - discriminant) / (2*d)
+            # t_2 = (-e + discriminant) / (2*d)
+            
+            # determine x value for t value
+            x_1 = np.polyval(ideal_x_coefficient, t_1)
+            # x_2 = np.polyval(ideal_x_coefficient, t_2)
+            
+            offset_1 = x_1 - (truck_pos_x)
+            # offset_2 = x_2 - (truck_pos_x)
+            offset = offset_1
+
+        # only right line is in range
+        elif (track_width/2)*0.8 < abs(right_border_line.x_position - truck_pos_x) < (track_width/2)*1.2:
+            offset = right_border_line.x_position - (int(track_width/2)) - truck_pos_x
+            cv2.line(canvas, (int(picWidth/2) + offset, picHeight),
+                    (int(picWidth/2) + offset, picHeight - 20), (0, 0, 255), 5)
+        # only left line is in range
+        elif (track_width/2)*0.8 < abs(left_border_line.x_position - truck_pos_x) < (track_width/2)*1.2:
+            offset = right_border_line.x_position - (int(track_width/2)) - truck_pos_x
+            cv2.line(canvas, (int(picWidth/2) + offset, picHeight),
+                (int(picWidth/2) + offset, picHeight - 20), (0, 0, 255), 5)
+        # neither left nor right lane is in range -> orient on right lane
+        else:
+            offset = right_border_line.x_position - (int(track_width/2)) - truck_pos_x
+            cv2.line(canvas, (int(picWidth/2) + offset, picHeight),
+                (int(picWidth/2) + offset, picHeight - 20), (0, 0, 255), 5)
+    
+    elif right_border_line is not None:
         offset = right_border_line.x_position - (int(track_width/2)) - truck_pos_x
-        cv2.line(canvas, (int(picWidth/2) + offset, picHeight),
-                 (int(picWidth/2) + offset, picHeight - 20), (0, 0, 255), 5)
-    # only left line is in range
-    elif (track_width/2)*0.8 < abs(left_border_line.x_position - truck_pos_x) < (track_width/2)*1.2:
+        cv2.line(canvas, (int(picWidth/2) + offset, picHeight),(int(picWidth/2) + offset, picHeight - 20), (0, 0, 255), 5)
+    elif left_border_line is not None:
         offset = right_border_line.x_position - (int(track_width/2)) - truck_pos_x
-        cv2.line(canvas, (int(picWidth/2) + offset, picHeight),
-            (int(picWidth/2) + offset, picHeight - 20), (0, 0, 255), 5)
-    # neither left nor right lane is in range -> orient on right lane
+        cv2.line(canvas, (int(picWidth/2) + offset, picHeight),(int(picWidth/2) + offset, picHeight - 20), (0, 0, 255), 5)
     else:
-        offset = right_border_line.x_position - (int(track_width/2)) - truck_pos_x
-        cv2.line(canvas, (int(picWidth/2) + offset, picHeight),
-            (int(picWidth/2) + offset, picHeight - 20), (0, 0, 255), 5)
+        print("error: no border lines detected")
 
 
     # draw position of truck + offset value
@@ -582,14 +618,14 @@ def listener():
     # run simultaneously.
     rospy.init_node('laneregression', anonymous=True)
 
-    rospy.Subscriber("cluster_data", cluster_data, callback)
+    rospy.Subscriber("cluster_data", cluster_data, callback, queue_size=1)
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()
 
 
 def talker(data_function):
-    pub = rospy.Publisher('laneregression_offset', Float32, queue_size=10)
+    pub = rospy.Publisher('laneregression_offset', Float32, queue_size=1)
     # rospy.init_node('talker_function', anonymous=True)
     rate = rospy.Rate(10)  # hz
     if not rospy.is_shutdown():

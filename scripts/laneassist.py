@@ -33,7 +33,7 @@ class P_Controller:
 
 # Berechnung des P-Glieds - Calculation of the proportional element
     def calc_controller(self, offset):
-            self.P_element = self.Kp * offset				                # Kp: Verstaerkungsfaktor - gain factor
+            self.P_element = self.Kp * offset * (-1)				                # Kp: Verstaerkungsfaktor - gain factor
             return self.P_element
 
 # Berechnung des Lenkwinkels - Calculation of the steering angle
@@ -54,7 +54,7 @@ class P_Controller:
 
 
 def callback(data):
-    rospy.loginfo("offset: " + str(int(data.data)))
+    # rospy.loginfo("offset: " + str(data.data))
 
     offset = data.data
 
@@ -64,7 +64,7 @@ def callback(data):
     controller.init_controller()
     steering_angle = controller.calc_controller(offset)
 
-    print(steering_angle)
+    # print(steering_angle)
 
 
     # UDP Message
@@ -89,7 +89,7 @@ def listener():
     # run simultaneously.
     rospy.init_node('laneassist_dummy', anonymous=True)
 
-    rospy.Subscriber("laneregression_offset", Float32, callback)
+    rospy.Subscriber("laneregression_offset", Float32, callback, queue_size=1)
 
     # spin() simply keeps python from exiting until this node is stopped
     rospy.spin()

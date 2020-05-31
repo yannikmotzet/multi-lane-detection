@@ -8,7 +8,7 @@ import os
 def talker():
     pub = rospy.Publisher('cluster_data', cluster_data, queue_size=10)
     rospy.init_node('lanedetection_dummy', anonymous=True)
-    rate = rospy.Rate(30) #hz
+    rate = rospy.Rate(0.5) #hz
 
     while not rospy.is_shutdown():
         # print(os.getcwd())
