@@ -18,17 +18,16 @@ __status__ = 'in development'
 # picHeight = 960
 picHeight = 660
 picWidth = 1280
-track_width = 143
+# track_width = 143
+track_width = 100
 poly_degree = 2
 reduce_raw_points = False
-dashed_y_distance = 150
-dashed_x_distance = 350
+dashed_x_distance = 80
+dashed_y_distance = 100
 
 truck_pos_x = int(picWidth / 2)
 canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
 data_function_collected = ""
-
-
 
 
 def draw_circles(points):
@@ -93,16 +92,16 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
     cluster_only_solid_lines = []
     cluster_only_dashed_lines = []
     cluster_meta_data = []
-    global dashed_y_distance
     global dashed_x_distance
+    global dashed_y_distance
 
     cluster = cluster_with_points
     start_end_points = cluster_start_end_points
     meta = []
     for i in range(len(cluster)):
         meta.append(META_UNDEFINED)
+    
     k = 0
-
     while (k < len(cluster)):
         i = k + 1
         while (i <= len(cluster) - 1):
@@ -118,7 +117,7 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
                 start_end_points[1, 1, k] - start_end_points[0, 1, i])
 
             # compare start and end point
-            if (x_diff_start_end < dashed_y_distance and y_diff_start_end < dashed_x_distance):
+            if (x_diff_start_end < dashed_x_distance and y_diff_start_end < dashed_y_distance):
                 # append cluster and adjust start end points
                 cluster[k] = np.append(cluster[k], cluster[i], 0)
                 del cluster[i]
@@ -130,7 +129,7 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
                 i = k + 1
 
             # compare end and start point
-            elif (x_diff_end_start < dashed_y_distance and y_diff_end_start < dashed_x_distance):
+            elif (x_diff_end_start < dashed_x_distance and y_diff_end_start < dashed_y_distance):
                 # append cluster and adjust start end points
                 cluster[k] = np.append(cluster[k], cluster[i], 0)
                 del cluster[i]
@@ -153,7 +152,229 @@ def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of
     return cluster, meta
 
 
+# A utility function to calculate  
+# area of triangle formed by (x1, y1),  
+# (x2, y2) and (x3, y3)  
+def area_triangle(x1, y1, x2, y2, x3, y3): 
+      
+    return abs((x1 * (y2 - y3) + 
+                x2 * (y3 - y1) + 
+                x3 * (y1 - y2)) / 2.0)
 
+def area_rectangle(x_diff, y_diff):
+    return abs(x_diff * y_diff)
+
+# finds intersection point of two lines
+# https://stackoverflow.com/questions/20677795/how-do-i-compute-the-intersection-point-of-two-lines
+def line_intersection(line1, line2):
+    xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
+    ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1])
+
+    def det(a, b):
+        return a[0] * b[1] - a[1] * b[0]
+
+    div = det(xdiff, ydiff)
+    if div == 0:
+       raise Exception('lines do not intersect')
+
+    d = (det(*line1), det(*line2))
+    x = det(d, xdiff) / div
+    y = det(d, ydiff) / div
+    return x, y
+
+# checks if point P(x,y) lies in racangle formed by A(x1, y1), B(x2, y2), C(x3, y3) and D(x4, y4)
+# https://www.geeksforgeeks.org/check-whether-given-point-lies-inside-rectangle-not/
+def check_point_in_rectangle(x1, y1, x2, y2, x3,  
+          y3, x4, y4, x, y): 
+                
+    # Calculate area of rectangle ABCD  
+    A = (area_triangle(x1, y1, x2, y2, x3, y3) +
+         area_triangle(x1, y1, x4, y4, x3, y3)) 
+  
+    # Calculate area of triangle PAB  
+    A1 = area_triangle(x, y, x1, y1, x2, y2) 
+  
+    # Calculate area of triangle PBC  
+    A2 = area_triangle(x, y, x2, y2, x3, y3) 
+  
+    # Calculate area of triangle PCD  
+    A3 = area_triangle(x, y, x3, y3, x4, y4) 
+  
+    # Calculate area of triangle PAD  
+    A4 = area_triangle(x, y, x1, y1, x4, y4); 
+  
+    # Check if sum of A1, A2, A3  
+    # and A4 is same as A  
+    print(A)
+    print(A1 + A2 + A3 + A4)
+    return (A == A1 + A2 + A3 + A4)
+
+# p1 (left top), p4 (bottom right)
+def check_point_in_rectangle_improved(x1, y1, x4, y4, x, y):
+    return x1*0.9-10 <= x <= x4*1.1+10 and y1*0.9-10 <= y <= y4*1.1+10
+
+def determine_cluster_with_solid_and_dashed_lines_improved(cluster_with_points, cluster_start_end_points):
+    
+    global dashed_x_distance
+    global dashed_y_distance
+    
+    # values for meta data: 0 == undefined,  1 == solid, 2 == dashed
+    META_UNDEFINED = 0
+    META_SOLID = 1
+    META_DASHED = 2
+
+    cluster_only_solid_lines = []
+    cluster_only_dashed_lines = []
+    cluster_meta_data = []
+
+    cluster = cluster_with_points
+    start_end_points = cluster_start_end_points
+    meta = []
+
+    for i in range(len(cluster)):
+        meta.append(META_UNDEFINED)
+    
+    # check for straight lines
+    k = 0
+    while (k < len(cluster)):
+        i = k + 1
+
+        while (i <= len(cluster) - 1):
+            
+            # x difference of points
+            x_diff_start_start = abs(start_end_points[0, 0, k] - start_end_points[0, 0, i])
+            x_diff_start_end = abs(start_end_points[0, 0, k] - start_end_points[1, 0, i])
+            x_diff_end_start = abs(start_end_points[1, 0, k] - start_end_points[0, 0, i])
+            x_diff_end_end = abs(start_end_points[1, 0, k] - start_end_points[1, 0, i])
+
+            # y difference of start/end points
+            y_diff_start_end = abs(start_end_points[0, 1, k] - start_end_points[1, 1, i])
+            y_diff_end_start = abs(start_end_points[1, 1, k] - start_end_points[0, 1, i])
+
+            
+            if x_diff_start_start <= dashed_x_distance and x_diff_start_end <= dashed_x_distance and x_diff_end_start <= dashed_x_distance and x_diff_end_end <= dashed_x_distance:
+                cluster[k] = np.append(cluster[k], cluster[i], 0)
+                del cluster[i]
+                meta[k] = META_DASHED
+                if y_diff_start_end < y_diff_end_start:
+                    # overwrite start point of k with start point of i, delete i
+                    start_end_points[0, 0, k] = start_end_points[0, 0, i]
+                    start_end_points[0, 1, k] = start_end_points[0, 1, i]
+                    start_end_points = np.delete(start_end_points, i, 2)
+                    i = k + 1
+                else:
+                    # overwrite end point of k with end point of i, delete i
+                    start_end_points[1, 0, k] = start_end_points[1, 0, i]
+                    start_end_points[1, 1, k] = start_end_points[1, 1, i]
+                    start_end_points = np.delete(start_end_points, i, 2)
+                    i = k + 1
+            else:
+                i = i + 1
+        if meta[k] == META_UNDEFINED:
+            meta[k] = META_SOLID
+        k = k + 1
+
+    # check for curved lines
+    k = 0
+    while (k < len(cluster)):
+        i = k + 1
+        while (i <= len(cluster) - 1):
+
+            # compare intersection
+            line1 = ((start_end_points[0, 0, k] ,start_end_points[0, 1, k]), (start_end_points[1, 0, k] ,start_end_points[1, 1, k]))
+            line2 = ((start_end_points[0, 0, i], start_end_points[0, 1, i]), (start_end_points[1, 0, i], start_end_points[1, 1, i]))
+            
+            intersection_x, intersection_y = line_intersection(line1, line2)
+
+            # draw intersection
+            # r, g, b = random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
+            # cv2.circle(canvas, (int(intersection_x), int(intersection_y)), 5, (r, g, b), -1)
+
+            # intersection should be in square
+            rectangle1_x1 = int(min(start_end_points[0, 0, k], start_end_points[1, 0, i]))
+            rectangle1_y1 = int(min(start_end_points[0, 1, k], start_end_points[1, 1, i]))
+            rectangle1_x2 = int(max(start_end_points[0, 0, k], start_end_points[1, 0, i]))
+            rectangle1_y2 = rectangle1_y1
+            rectangle1_x3 = rectangle1_x1
+            rectangle1_y3 = int(max(start_end_points[0, 1, k], start_end_points[1, 1, i]))
+            rectangle1_x4 = rectangle1_x2
+            rectangle1_y4 = rectangle1_y3
+            
+            rectangle2_x1 = int(min(start_end_points[1, 0, k], start_end_points[0, 0, i]))
+            rectangle2_y1 = int(min(start_end_points[1, 1, k], start_end_points[0, 1, i]))
+            rectangle2_x2 = int(max(start_end_points[1, 0, k], start_end_points[0, 0, i]))
+            rectangle2_y2 = rectangle2_y1
+            rectangle2_x3 = rectangle2_x1
+            rectangle2_y3 = int(max(start_end_points[1, 1, k], start_end_points[0, 1, i]))
+            rectangle2_x4 = rectangle2_x2
+            rectangle2_y4 = rectangle2_y3
+
+            # draw rectangle
+            # cv2.rectangle(canvas, (int(rectangle1_x2), int(rectangle1_y2)), (int(rectangle1_x3), int(rectangle1_y3)), (r, g, b), 1)
+            # cv2.rectangle(canvas, (int(rectangle2_x2), int(rectangle2_y2)), (int(rectangle2_x3), int(rectangle2_y3)), (r, g, b), 1)
+
+            
+            area_rectangle_1 = area_rectangle(abs(rectangle1_x2 - rectangle1_x1), abs(rectangle1_y3 - rectangle1_y1))
+            area_rectangle_2 = area_rectangle(abs(rectangle2_x2 - rectangle2_x1), abs(rectangle2_y3 - rectangle2_y1))
+
+            # rectangle 1 is smaller
+            if area_rectangle_1 < area_rectangle_2:
+                if area_rectangle_1 <= (dashed_x_distance * dashed_y_distance):
+                    if check_point_in_rectangle_improved(rectangle1_x1, rectangle1_y1, rectangle1_x4, rectangle1_y4, intersection_x, intersection_y):
+                        cluster[k] = np.append(cluster[k], cluster[i], 0)
+                        del cluster[i]
+                        # overwrite start point of k with start point of i, delete i
+                        start_end_points[0, 0, k] = start_end_points[0, 0, i]
+                        start_end_points[0, 1, k] = start_end_points[0, 1, i]
+                        start_end_points = np.delete(start_end_points, i, 2)
+                        meta[k] = META_DASHED
+                        i = k + 1
+                    else:
+                        i = i + 1
+                else:
+                    i = i + 1
+
+            # rectangle 2 is smaller
+            else:
+                if area_rectangle_2 <= (dashed_x_distance * dashed_y_distance):
+                    if check_point_in_rectangle_improved(rectangle2_x1, rectangle2_y1, rectangle2_x4, rectangle2_y4, intersection_x, intersection_y):
+                        cluster[k] = np.append(cluster[k], cluster[i], 0)
+                        del cluster[i]
+                        # overwrite end point of k with end point of i, delete i
+                        start_end_points[1, 0, k] = start_end_points[1, 0, i]
+                        start_end_points[1, 1, k] = start_end_points[1, 1, i]
+                        start_end_points = np.delete(start_end_points, i, 2)
+                        meta[k] = META_DASHED
+                        i = k + 1
+                    else:
+                        i = i + 1
+                else:
+                    i = i + 1
+
+            # draw rectangle
+            # cv2.rectangle(canvas, (int(x2), int(y2)), (int(x3), int(y3)), (r, g, b), 1)
+
+
+        if meta[k] == META_UNDEFINED:
+            meta[k] = META_SOLID
+        k = k + 1
+
+    # please check!!!!!
+    k = 0
+    while (k < len(cluster)):
+        if start_end_points[1, 1, k] < 350:
+            del cluster[k]
+            del meta[k]
+            start_end_points = np.delete(start_end_points, k, 2)
+        else:
+            k = k + 1
+        
+
+    # check that meta list has same length like cluster list
+    del meta[len(cluster):]
+
+    return cluster, meta
+        
 
 # sorts function points successively by looking for nearest neighbor (O(n^2))
 def sort_function_points_improved(points):
@@ -361,18 +582,21 @@ def callback(data):
     cluster_start_end_points = determine_cluster_start_end_points(
         cluster_with_points, number_of_cluster)
 
-    # draw start and end point of each cluster
-    for b in range(number_of_cluster):
-        # start point
-        cv2.circle(canvas, (int(cluster_start_end_points[0, 0, b]), int(
-            cluster_start_end_points[0, 1, b])), 5, (255, 0, 0), -1)
-        # end point
-        cv2.circle(canvas, (int(cluster_start_end_points[1, 0, b]), int(
-            cluster_start_end_points[1, 1, b])), 5, (255, 0, 0), -1)
+    # # draw start and end point of each cluster
+    # for b in range(number_of_cluster):
+    #     # start point
+    #     cv2.circle(canvas, (int(cluster_start_end_points[0, 0, b]), int(
+    #         cluster_start_end_points[0, 1, b])), 5, (255, 0, 0), -1)
+    #     # end point
+    #     cv2.circle(canvas, (int(cluster_start_end_points[1, 0, b]), int(
+    #         cluster_start_end_points[1, 1, b])), 5, (255, 0, 0), -1)
 
     # find cluster with solid lines + dashed lines (line cluster)
-    cluster_with_solid_and_dashed_lines, cluster_meta_data = determine_cluster_with_solid_and_dashed_lines(
-        cluster_with_points, number_of_cluster, cluster_start_end_points)
+    # cluster_with_solid_and_dashed_lines, cluster_meta_data = determine_cluster_with_solid_and_dashed_lines(
+    #     cluster_with_points, number_of_cluster, cluster_start_end_points)
+    cluster_with_solid_and_dashed_lines, cluster_meta_data = determine_cluster_with_solid_and_dashed_lines_improved(
+        cluster_with_points, cluster_start_end_points)
+    
 
     for l in cluster_meta_data:
         all_meta.append(l)
@@ -515,7 +739,8 @@ def callback(data):
 
     
     # calculate ideal line and offset
-    #################################
+    #################################s[1, 0, k] = start_end_points[1, 0, i]
+                    # start_end_point
     global track_width
 
     if right_border_line is not None and left_border_line is not None:
@@ -602,7 +827,7 @@ def callback(data):
     #################################
     # display canvas window
     cv2.imshow("laneregression", canvas)
-    # cv2.imwrite('result.png', canvas)
+    cv2.imwrite('result.png', canvas)
     cv2.waitKey(1)
     # cv2.destroyAllWindows()
 
