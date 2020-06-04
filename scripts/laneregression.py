@@ -7,6 +7,7 @@ import numpy as np
 import cv2
 import random
 import math
+import time
 
 __author__ = 'Yannik Motzet'
 __copyright__ = 'Copyright 2020, ZF DHBW Innovation Lab'
@@ -24,6 +25,9 @@ poly_degree = 2
 reduce_raw_points = False
 dashed_x_distance = 80
 dashed_y_distance = 100
+display_canvas = True
+display_time = False
+
 
 truck_pos_x = int(picWidth / 2)
 canvas = 255 * np.ones(shape=[picHeight, picWidth, 3], dtype=np.uint8)
@@ -31,9 +35,9 @@ data_function_collected = ""
 
 
 def draw_circles(points):
-    # b, g, r = random.randint(0, 255), random.randint(
-    #     0, 255), random.randint(0, 255)
-    b, g, r = 0, 0, 0
+    b, g, r = random.randint(0, 255), random.randint(
+        0, 255), random.randint(0, 255)
+    # b, g, r = 0, 0, 0
     for i in range(int(points.size / 2)):
         cv2.circle(canvas, (points[i, 0], points[i, 1]), 1, (b, g, r), -1)
 
@@ -78,91 +82,9 @@ def determine_cluster_start_end_points(cluster_with_points, number_of_cluster):
     return cluster_start_end_points
 
 
-
-# takes all cluster and returns:
-# 1) cluster with solid and dashed lines (datatype of return is list with np.array as items)
-# 2) metadata (return datatype is list with integer items, the integer correspond to the type of the lines)
-def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, number_of_cluster, cluster_start_end_points):
-
-    # values for meta data: 0 == undefined,  1 == solid, 2 == dashed
-    META_UNDEFINED = 0
-    META_SOLID = 1
-    META_DASHED = 2
-
-    cluster_only_solid_lines = []
-    cluster_only_dashed_lines = []
-    cluster_meta_data = []
-    global dashed_x_distance
-    global dashed_y_distance
-
-    cluster = cluster_with_points
-    start_end_points = cluster_start_end_points
-    meta = []
-    for i in range(len(cluster)):
-        meta.append(META_UNDEFINED)
-    
-    k = 0
-    while (k < len(cluster)):
-        i = k + 1
-        while (i <= len(cluster) - 1):
-            # x difference
-            x_diff_start_end = abs(
-                start_end_points[0, 0, k] - start_end_points[1, 0, i])
-            x_diff_end_start = abs(
-                start_end_points[1, 0, k] - start_end_points[0, 0, i])
-            # y difference
-            y_diff_start_end = abs(
-                start_end_points[0, 1, k] - start_end_points[1, 1, i])
-            y_diff_end_start = abs(
-                start_end_points[1, 1, k] - start_end_points[0, 1, i])
-
-            # compare start and end point
-            if (x_diff_start_end < dashed_x_distance and y_diff_start_end < dashed_y_distance):
-                # append cluster and adjust start end points
-                cluster[k] = np.append(cluster[k], cluster[i], 0)
-                del cluster[i]
-                # overwrite start point of k with start point of i, delete i
-                start_end_points[0, 0, k] = start_end_points[0, 0, i]
-                start_end_points[0, 1, k] = start_end_points[0, 1, i]
-                start_end_points = np.delete(start_end_points, i, 2)
-                meta[k] = META_DASHED
-                i = k + 1
-
-            # compare end and start point
-            elif (x_diff_end_start < dashed_x_distance and y_diff_end_start < dashed_y_distance):
-                # append cluster and adjust start end points
-                cluster[k] = np.append(cluster[k], cluster[i], 0)
-                del cluster[i]
-                # overwrite end point of k with end point of i, delete i
-                start_end_points[1, 0, k] = start_end_points[1, 0, i]
-                start_end_points[1, 1, k] = start_end_points[1, 1, i]
-                start_end_points = np.delete(start_end_points, i, 2)
-                meta[k] = META_DASHED
-                i = k + 1
-            else:
-                i = i + 1
-
-        if meta[k] == META_UNDEFINED:
-            meta[k] = META_SOLID
-        k = k + 1
-
-    # check that meta list has same length like cluster list
-    del meta[len(cluster):]
-
-    return cluster, meta
-
-
-# A utility function to calculate  
-# area of triangle formed by (x1, y1),  
-# (x2, y2) and (x3, y3)  
-def area_triangle(x1, y1, x2, y2, x3, y3): 
-      
-    return abs((x1 * (y2 - y3) + 
-                x2 * (y3 - y1) + 
-                x3 * (y1 - y2)) / 2.0)
-
-def area_rectangle(x_diff, y_diff):
-    return abs(x_diff * y_diff)
+# function that calculates area of ractangle depending on the side lengths
+def area_rectangle(x_length, y_length):
+    return abs(x_length * y_length)
 
 # finds intersection point of two lines
 # https://stackoverflow.com/questions/20677795/how-do-i-compute-the-intersection-point-of-two-lines
@@ -175,45 +97,23 @@ def line_intersection(line1, line2):
 
     div = det(xdiff, ydiff)
     if div == 0:
-       raise Exception('lines do not intersect')
+        print("waring: no intersection")
+    #    raise Exception('lines do not intersect')
 
     d = (det(*line1), det(*line2))
     x = det(d, xdiff) / div
     y = det(d, ydiff) / div
     return x, y
 
-# checks if point P(x,y) lies in racangle formed by A(x1, y1), B(x2, y2), C(x3, y3) and D(x4, y4)
-# https://www.geeksforgeeks.org/check-whether-given-point-lies-inside-rectangle-not/
-def check_point_in_rectangle(x1, y1, x2, y2, x3,  
-          y3, x4, y4, x, y): 
-                
-    # Calculate area of rectangle ABCD  
-    A = (area_triangle(x1, y1, x2, y2, x3, y3) +
-         area_triangle(x1, y1, x4, y4, x3, y3)) 
-  
-    # Calculate area of triangle PAB  
-    A1 = area_triangle(x, y, x1, y1, x2, y2) 
-  
-    # Calculate area of triangle PBC  
-    A2 = area_triangle(x, y, x2, y2, x3, y3) 
-  
-    # Calculate area of triangle PCD  
-    A3 = area_triangle(x, y, x3, y3, x4, y4) 
-  
-    # Calculate area of triangle PAD  
-    A4 = area_triangle(x, y, x1, y1, x4, y4); 
-  
-    # Check if sum of A1, A2, A3  
-    # and A4 is same as A  
-    print(A)
-    print(A1 + A2 + A3 + A4)
-    return (A == A1 + A2 + A3 + A4)
 
-# p1 (left top), p4 (bottom right)
+# check if point (x, y) lies in rectangle (p1 (left top), p4 (bottom right))
 def check_point_in_rectangle_improved(x1, y1, x4, y4, x, y):
     return x1*0.9-10 <= x <= x4*1.1+10 and y1*0.9-10 <= y <= y4*1.1+10
 
-def determine_cluster_with_solid_and_dashed_lines_improved(cluster_with_points, cluster_start_end_points):
+# takes all cluster and returns:
+# 1) cluster with solid and dashed lines (datatype of return is list with np.array as items)
+# 2) metadata (return datatype is list with integer items, the integer correspond to the type of the lines)
+def determine_cluster_with_solid_and_dashed_lines(cluster_with_points, cluster_start_end_points):
     
     global dashed_x_distance
     global dashed_y_distance
@@ -222,10 +122,6 @@ def determine_cluster_with_solid_and_dashed_lines_improved(cluster_with_points, 
     META_UNDEFINED = 0
     META_SOLID = 1
     META_DASHED = 2
-
-    cluster_only_solid_lines = []
-    cluster_only_dashed_lines = []
-    cluster_meta_data = []
 
     cluster = cluster_with_points
     start_end_points = cluster_start_end_points
@@ -374,12 +270,131 @@ def determine_cluster_with_solid_and_dashed_lines_improved(cluster_with_points, 
     del meta[len(cluster):]
 
     return cluster, meta
+
+# takes all cluster and returns:
+# 1) cluster with solid and dashed lines (datatype of return is list with np.array as items)
+# 2) metadata (return datatype is list with integer items, the integer correspond to the type of the lines)
+def determine_cluster_with_solid_and_dashed_lines_improved(cluster_with_points, cluster_start_end_points):
+    global dashed_x_distance
+    global dashed_y_distance
+
+    # values for meta data: 0 == undefined,  1 == solid, 2 == dashed
+    META_UNDEFINED = 0
+    META_SOLID = 1
+    META_DASHED = 2
+    
+    cluster = cluster_with_points
+    start_end_points = cluster_start_end_points
+    meta = []
+
+    for i in range(len(cluster)):
+        meta.append(META_UNDEFINED)
+
+    n = len(cluster)
+    comparison_matrix = np.full((n, n), False)
+    single_cluster_list = np.full((n), False)
+    
+    # build comparison matrix
+    for i in range(n):
+        for j in range(n):
+            if i != j:
+                # check for straight lines (compare x difference of start/end points)
+                # x difference
+                x_diff_start_start = abs(start_end_points[0, 0, i] - start_end_points[0, 0, j])
+                x_diff_start_end = abs(start_end_points[0, 0, i] - start_end_points[1, 0, j])
+                x_diff_end_start = abs(start_end_points[1, 0, i] - start_end_points[0, 0, j])
+                x_diff_end_end = abs(start_end_points[1, 0, i] - start_end_points[1, 0, j])
+                if x_diff_start_start <= dashed_x_distance and x_diff_start_end <= dashed_x_distance and x_diff_end_start <= dashed_x_distance and x_diff_end_end <= dashed_x_distance:
+                    comparison_matrix[i, j] = True
+                    single_cluster_list[i] = True
+                # check for curved lanes (check if intersection is within a rectangle)
+                else:
+                    # y difference of start/end points
+                    y_diff_start_end = abs(start_end_points[0, 1, i] - start_end_points[1, 1, j])
+                    y_diff_end_start = abs(start_end_points[1, 1, i] - start_end_points[0, 1, j])
+
+                    # compare intersection
+                    line1 = ((start_end_points[0, 0, i] ,start_end_points[0, 1, i]), (start_end_points[1, 0, i] ,start_end_points[1, 1, i]))
+                    line2 = ((start_end_points[0, 0, j], start_end_points[0, 1, j]), (start_end_points[1, 0, j], start_end_points[1, 1, j]))
+                    intersection_x, intersection_y = line_intersection(line1, line2)
+
+                    # draw intersection
+                    # if display_canvas:
+                    #     r, g, b = random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
+                    #     cv2.circle(canvas, (int(intersection_x), int(intersection_y)), 5, (r, g, b), -1)
+
+                    # sement i is under segment j
+                    if y_diff_start_end < y_diff_end_start:
+                        rectangle_x1 = int(min(start_end_points[0, 0, i], start_end_points[1, 0, j]))
+                        rectangle_y1 = int(min(start_end_points[0, 1, i], start_end_points[1, 1, j]))
+                        rectangle_x2 = int(max(start_end_points[0, 0, i], start_end_points[1, 0, j]))
+                        rectangle_y2 = rectangle_y1
+                        rectangle_x3 = rectangle_x1
+                        rectangle_y3 = int(max(start_end_points[0, 1, i], start_end_points[1, 1, j]))
+                        rectangle_x4 = rectangle_x2
+                        rectangle_y4 = rectangle_y3
+                    # sement i is above segment j
+                    else:
+                        rectangle_x1 = int(min(start_end_points[1, 0, i], start_end_points[0, 0, j]))
+                        rectangle_y1 = int(min(start_end_points[1, 1, i], start_end_points[0, 1, j]))
+                        rectangle_x2 = int(max(start_end_points[1, 0, i], start_end_points[0, 0, j]))
+                        rectangle_y2 = rectangle_y1
+                        rectangle_x3 = rectangle_x1
+                        rectangle_y3 = int(max(start_end_points[1, 1, i], start_end_points[0, 1, j]))
+                        rectangle_x4 = rectangle_x2
+                        rectangle_y4 = rectangle_y3
+
+                    # draw rectangle
+                    # if display_canvas:
+                    #     cv2.rectangle(canvas, (int(rectangle_x2), int(rectangle_y2)), (int(rectangle_x3), int(rectangle_y3)), (r, g, b), 1)
+                    
+                    area = area_rectangle(abs(rectangle_x2 - rectangle_x1), abs(rectangle_y3 - rectangle_y1))
+                    # area should be smaller than a certain area 
+                    if area <= (dashed_x_distance * dashed_y_distance):
+                        if check_point_in_rectangle_improved(rectangle_x1, rectangle_y1, rectangle_x4, rectangle_y4, intersection_x, intersection_y):
+                            comparison_matrix[i, j] = True
+                            single_cluster_list[i] = True
+    
+    # # go through comparison matrix
+    # Warshall algorithm
+    for k in range(n):
+        for i in range(n):
+            if comparison_matrix[i, k]:
+                for j in range(n):
+                    if comparison_matrix[k, j]:
+                        comparison_matrix[i, j] = True
+    
+    new_cluster = []
+    already_appended = np.full((n), False)
+
+    for i in range(n):
+        if single_cluster_list[i]:
+            single_cluster_list[i] = False
+            new_cluster.append(cluster[i])
+            for j in range(i, n):
+                if i != j:
+                    if comparison_matrix[i, j]:
+                        new_cluster[len(new_cluster) - 1] = np.append(new_cluster[len(new_cluster) - 1], cluster[j], 0)
+                        meta[i] = META_DASHED
+                        single_cluster_list[j] = False
+                        already_appended[j] = True
+        elif already_appended[i] == False:
+            new_cluster.append(cluster[i])
+            meta[i] = META_SOLID
+
+
+    # check that meta list has same length like cluster list
+    del meta[len(new_cluster):]
+
+    return new_cluster, meta
+
+
         
 
 # sorts function points successively by looking for nearest neighbor (O(n^2))
 def sort_function_points_improved(points):
 
-    threshold_distance = 50
+    threshold_distance = 20
 
     number_of_points = int(points.size / 2)
     function_points_unsorted = np.reshape(points, (number_of_points, 2))
@@ -451,7 +466,7 @@ def sort_function_points_improved(points):
 
 
 # NOT IN USE!
-# sorts the function points
+# sorts the function points by y-value
 def sort_function_points(function_points):
     number_of_points = int(function_points.size / 2)
     function_points = np.reshape(function_points, (number_of_points, 2))
@@ -573,43 +588,56 @@ def callback(data):
         cluster_with_points.append(points)
 
         # draw raw points
-        # draw_circles(points)
+        # if display_output:
+        #     draw_circles(points)
 
     
     # find dashed/solid lines
     ####################################################
     # find start and end points of cluster
+    time0 = time.time()
     cluster_start_end_points = determine_cluster_start_end_points(
         cluster_with_points, number_of_cluster)
+    time1 = time.time()
+    if display_time:
+        print("time0 " + str(time1 - time0))
 
-    # # draw start and end point of each cluster
-    # for b in range(number_of_cluster):
-    #     # start point
-    #     cv2.circle(canvas, (int(cluster_start_end_points[0, 0, b]), int(
-    #         cluster_start_end_points[0, 1, b])), 5, (255, 0, 0), -1)
-    #     # end point
-    #     cv2.circle(canvas, (int(cluster_start_end_points[1, 0, b]), int(
-    #         cluster_start_end_points[1, 1, b])), 5, (255, 0, 0), -1)
+    # draw start and end point of each cluster
+    if display_canvas:
+        for b in range(number_of_cluster):
+            # start point
+            cv2.circle(canvas, (int(cluster_start_end_points[0, 0, b]), int(
+                cluster_start_end_points[0, 1, b])), 5, (255, 0, 0), -1)
+            # end point
+            cv2.circle(canvas, (int(cluster_start_end_points[1, 0, b]), int(
+                cluster_start_end_points[1, 1, b])), 5, (255, 0, 0), -1)
 
     # find cluster with solid lines + dashed lines (line cluster)
     # cluster_with_solid_and_dashed_lines, cluster_meta_data = determine_cluster_with_solid_and_dashed_lines(
-    #     cluster_with_points, number_of_cluster, cluster_start_end_points)
+    #     cluster_with_points, cluster_start_end_points
+    
+    time2 = time.time()
     cluster_with_solid_and_dashed_lines, cluster_meta_data = determine_cluster_with_solid_and_dashed_lines_improved(
         cluster_with_points, cluster_start_end_points)
+    time3 = time.time()
+    if display_time:
+        print("time1 " + str(time3 - time2))
     
 
     for l in cluster_meta_data:
         all_meta.append(l)
 
     # # draw new cluster with solid lines + dashed lines on canvas
-    # for u in range(int(len(cluster_with_solid_and_dashed_lines))):
-    #     draw_circles(cluster_with_solid_and_dashed_lines[u])
+    # if display_output:
+        # for u in range(int(len(cluster_with_solid_and_dashed_lines))):
+        #     draw_circles(cluster_with_solid_and_dashed_lines[u])
 
     
 
 
     # find function for each line
     ####################################################
+    time4 = time.time()
     reduce_points = False
     for c in range(int(len(cluster_with_solid_and_dashed_lines))):
         # reduce points with polydp algorithm?
@@ -622,8 +650,9 @@ def callback(data):
             function_points = cluster_with_solid_and_dashed_lines[c].reshape(cluster_with_solid_and_dashed_lines[c].shape[0],1,2)
         
         # draw points 
-        b, g, r = random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
-        cv2.drawContours(canvas, function_points, -1, (b, g, r), 5)
+        # if display_output:
+            # b, g, r = random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
+            # cv2.drawContours(canvas, function_points, -1, (b, g, r), 5)
         
         if len(function_points) < 3:
             print("warning: function of a line might be faulty due to too less function points")
@@ -637,17 +666,21 @@ def callback(data):
         for m in function:
             all_functions.append(m)
 
-        # draw function
-        # TODO: set proper end point
-        for i in range(-500, 1500, 2):
-            x = np.polyval(function[0], i)
-            y = np.polyval(function[1], i)
-            cv2.circle(canvas, (int(x), int(y)), 1, (0, 255, 0), -1)
+        # # draw function
+        # # TODO: set proper end point
+        # if display_output:
+        #     for i in range(-500, 1500, 2):
+        #         x = np.polyval(function[0], i)
+        #         y = np.polyval(function[1], i)
+        #         cv2.circle(canvas, (int(x), int(y)), 1, (0, 255, 0), -1)
 
         # draw position of truck
         cv2.line(canvas, (int(picWidth/2), picHeight),
                  (int(picWidth/2), picHeight - 20), (0, 0, 0), 5)
-
+    
+    time5 = time.time()
+    if display_time:
+        print("time2 " + str(time5 - time4))
 
 
 
@@ -664,6 +697,7 @@ def callback(data):
     ####################################################
     # ROS message
     # includes koefficents of functions (#x(s) = as^2+bs+c, #y(s) = ds^2+es+f), meta information and position
+    time6 = time.time()
     function_array = functionArray()
     
     # left lines
@@ -732,10 +766,11 @@ def callback(data):
         y_coefficient[1] = functions[i].e
         y_coefficient[2] = functions[i].f
         
-        for m in range(-250, 1500, 2):                             
-            x = np.polyval(x_coefficient, m)
-            y = np.polyval(y_coefficient, m)
-            cv2.circle(canvas, (int(x), int(y)), 1, (b, g, b), -1)
+        if display_canvas:
+            for m in range(-250, 1500, 2):                             
+                x = np.polyval(x_coefficient, m)
+                y = np.polyval(y_coefficient, m)
+                cv2.circle(canvas, (int(x), int(y)), 1, (b, g, b), -1)
 
     
     # calculate ideal line and offset
@@ -809,29 +844,39 @@ def callback(data):
         cv2.line(canvas, (int(picWidth/2) + offset, picHeight),(int(picWidth/2) + offset, picHeight - 20), (0, 0, 255), 5)
     else:
         print("error: no border lines detected")
+    time7 = time.time()
+    if display_time:
+        print("time3 " + str(time7 - time6))
 
 
     # draw position of truck + offset value
     #################################
-    cv2.line(canvas, (int(picWidth/2), picHeight),
-                 (int(picWidth/2), picHeight - 20), (0, 0, 0), 5)
-    cv2.putText(canvas, 'offset = ' + str(offset),( 20, picHeight - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 0)
+    if display_canvas:
+        cv2.line(canvas, (int(picWidth/2), picHeight),
+                    (int(picWidth/2), picHeight - 20), (0, 0, 0), 5)
+        cv2.putText(canvas, 'offset = ' + str(offset),( 20, picHeight - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, 0)
     
     
 
     # send offset via ROS topic
     ################################
+    time8 = time.time()
     talker(offset)
+    time9 = time.time()
+    if display_time:
+        print("time4 " + str(time9 - time8))
 
     
     #################################
     # display canvas window
-    cv2.imshow("laneregression", canvas)
-    cv2.imwrite('result.png', canvas)
-    cv2.waitKey(1)
-    # cv2.destroyAllWindows()
-
-
+    if display_canvas:
+        cv2.imshow("laneregression", canvas)
+        cv2.imwrite('result.png', canvas)
+        cv2.waitKey(1)
+        # cv2.destroyAllWindows()
+    time12 = time.time()
+    if display_time:
+        print("time9 " + str(time12 - time1))
 
 
 def listener():
@@ -852,11 +897,11 @@ def listener():
 def talker(data_function):
     pub = rospy.Publisher('laneregression_offset', Float32, queue_size=1)
     # rospy.init_node('talker_function', anonymous=True)
-    rate = rospy.Rate(10)  # hz
+    #rate = rospy.Rate(30)  # hz
     if not rospy.is_shutdown():
         # rospy.loginfo(data_function)
         pub.publish(data_function)
-        rate.sleep()
+        #rate.sleep()
 
 
 if __name__ == '__main__':

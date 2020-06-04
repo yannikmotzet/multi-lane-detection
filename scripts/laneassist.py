@@ -21,7 +21,7 @@ UDP_PORT = 10002
 # Initialisierung des Reglers - Initialization of the controller
 class P_Controller:
     def init_controller(self):		
-            self.Kp = 0.5
+            self.Kp = 10
             # self.offset = 0.0
             self.L_wheelbase = 325          # [mm]
             self.g_acceleration = 9.81      # [m/s^2] - acceleration of gravity
