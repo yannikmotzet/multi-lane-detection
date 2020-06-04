@@ -7,7 +7,7 @@
 ## Getting started
 ### How to clone
 * clone repository to your ROS workspace: ``` ~/catkin_ws/scr$: git clone https://gitlab.com/zfinnolab/laneregression/laneregression ```
-* clone Lane Detection to your ROS workspace: ```~/catkin_ws/scr$: git clone https://gitlab.com/zfinnolab/lane-detection-assist/detectionlane.git```
+* clone Lane Detection repo (yannik branch!) to your ROS workspace: ```~/catkin_ws/scr$: git clone https://gitlab.com/zfinnolab/lane-detection-assist/detectionlane.git```
 
 
 ### How to build
@@ -15,12 +15,16 @@
 * ``` ~/catkin_ws$: source devel/setup.bash ```
 
 ### How to run
+#### start all (detection/regression/assist) with launchfile
 * ```~/catkin_ws/$: source devel/setup.bash ```
 
-run all (detection/regression/assist) with roslaunch
-* ```~/catkin_ws/$: roslaunch lane_keeping_assist all.launch ```
+intput for detection from video:
+* ```~/catkin_ws/$: roslaunch lane_keeping_assist all_video.launch ```
+ 
+input for detection from camera:
+* ```~/catkin_ws/$: roslaunch lane_keeping_assist all_camera.launch ```
 
-start single nodes manually:
+#### start single nodes manually:
 * start roscore: ```~/catkin_ws/$: roscore ```
 for each step open new terminal and first paste ``` source devel/setup.bash ``` in ``` /catkin_ws$ ```
 * dummy lanedetection: ``` ~/catkin_ws$: rosrun lane_keeping_assist lanedetection_dummy.py ``` 
@@ -37,6 +41,9 @@ for each step open new terminal and first paste ``` source devel/setup.bash ``` 
 * use Capture Card (Mira Box)
 * use [v4l2loopback](https://github.com/umlaeute/v4l2loopback) + [OBS](https://obsproject.com/de) (install v4l2loopback, install OBS, run ```sudo modprobe v4l2loopback```, in OBS: tools -> V4L2 Video output)
 * use [v4l2loopback](https://github.com/umlaeute/v4l2loopback) + shell script (install  v4l2loopback, run ```./tools/screen_capture.sh```)
+
+### Test UDP messages to TruckMaker/Truck
+with ```\tools\send_udp.py``` you can send a steering angle to TM (go sure that IP is correct)
 
 
 ## How it works
