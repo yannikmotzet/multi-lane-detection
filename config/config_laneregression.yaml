@@ -1,0 +1,37 @@
+# picture resoultion
+# PICTURE_HEIGHT = 960
+PICTURE_HEIGHT: 660
+PICTURE_WIDTH: 1280
+
+# width of track
+# TRACK_WIDTH = 143
+TRACK_WIDTH: 100
+
+# degree for polynomial regression
+POLY_DEGREE: 2
+
+# reduce points of lanedetection with polydp (Douglas-Ramer)
+REDUCE_RAW_POINTS: False
+
+# minimum length a cluster should have (from start to end pont)
+MIN_CLUSTER_LENGTH: 50
+
+# cluster which start under this value will be deleted
+MIN_CLUSTER_HEIGHT: 300
+
+# distance of lane segments (important for cluster_lane_segments method)
+DASHED_X_DISTANCE: 80
+DASHED_Y_DISTANCE: 100
+
+# parameters for segments_lie_on_a_line method
+ANGLE_DIFFERENCE: 10
+SEGMENT_X_DIFFERENCE: 20
+
+# minimum distance function points should have after sorting
+SORT_POINT_DISTANCE: 20
+
+# display window
+DISPLAY_CANVAS: True
+
+# print execution time of different code blocks
+DISPLAY_TIME: False

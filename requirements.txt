@@ -1,0 +1,4 @@
+numpy>=1.17.4
+opencv-python>=4.1.2.30
+cv-bridge>=1.13.0
+rospy>=1.14.3

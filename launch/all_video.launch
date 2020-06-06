@@ -1,16 +1,14 @@
 <?xml version="1.0"?>
 <launch>
+    <rosparam file="$(find lane_keeping_assist)/config/config_laneregression.yaml" />
+    <node name="laneregression" pkg="lane_keeping_assist" type="laneregression.py" output="screen" />
+    <node name="laneassist" pkg="lane_keeping_assist" type="laneassist.py" output="screen" />
 
-    <node name="laneregression" pkg="lane_keeping_assist" type="laneregression.py" output="screen"/>
-    <node name="laneassist" pkg="lane_keeping_assist" type="laneassist.py" output="screen"/>
-
-	<node name="detection" pkg="detection" type="detection" output="screen">
+    <node name="detection" pkg="detection" type="detection" output="screen">
 		<rosparam command="load" file="$(find detection)/config/detection.yaml" />
-	</node>
+    </node>
 
-	<include file="$(find video_stream_opencv)/launch/camera.launch">
+    <include file="$(find video_stream_opencv)/launch/camera.launch">
 		<arg name="video_stream_provider" value="$(find detection)/Spurerkennungssimulation.avi" />
-	</include>
-
-
+    </include>
 </launch>

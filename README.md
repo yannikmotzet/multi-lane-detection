@@ -9,6 +9,8 @@
 * clone repository to your ROS workspace: ``` ~/catkin_ws/scr$: git clone https://gitlab.com/zfinnolab/laneregression/laneregression ```
 * clone Lane Detection repo (yannik branch!) to your ROS workspace: ```~/catkin_ws/scr$: git clone https://gitlab.com/zfinnolab/lane-detection-assist/detectionlane.git```
 
+### Requirements
+to get required python packages run: ```~/catkin_ws$: pip install -r requirements.txt ```
 
 ### How to build
 * build the project: ``` ~/catkin_ws$: catkin_make ```
