@@ -38,6 +38,7 @@ for each step open new terminal and first paste ``` source devel/setup.bash ``` 
 ### Get sample videos
 * TruckMaker video: [Spurerkennungssimulation.avi](https://drive.google.com/open?id=1Fd3jdyYO9kUJk1QslhRScMUqpeO-pjwe)
 * Lab video: [capture_webcam_lab.avi](https://drive.google.com/file/d/1PhBOzQwyuuEcxeehWBJXEhRqIL0cKGOF/view?usp=sharing)
+
 Save in: ``` ~/catkin_ws/scr/detection ```
 
 ### How to: IPGMovie --> webcam
