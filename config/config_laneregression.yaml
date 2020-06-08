@@ -4,8 +4,9 @@ PICTURE_HEIGHT: 660
 PICTURE_WIDTH: 1280
 
 # width of track
-# TRACK_WIDTH = 143
-TRACK_WIDTH: 100
+# TRACK_WIDTH = 143 # TruckMaker
+# TRACK_WIDTH: 100 # simulation video
+TRACK_WIDTH: 395 # real truck
 
 # degree for polynomial regression
 POLY_DEGREE: 2
@@ -14,7 +15,7 @@ POLY_DEGREE: 2
 REDUCE_RAW_POINTS: False
 
 # minimum length a cluster should have (from start to end pont)
-MIN_CLUSTER_LENGTH: 50
+MIN_CLUSTER_LENGTH: 150
 
 # cluster which start under this value will be deleted
 MIN_CLUSTER_HEIGHT: 300

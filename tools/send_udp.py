@@ -3,10 +3,13 @@ import socket
 
 UDP_IP = "192.168.0.90"
 UDP_PORT = 10002
-steering_angle = 100
-message ="STEER,1," + str(steering_angle)
-MESSAGE = str.encode(message)
+steering_angle = 0
+velocity = 20
 
+message ="STEER,1," + str(steering_angle)+","
+message ="STEER,1," + str(velocity)+",50,"
+
+MESSAGE = str.encode(message)
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.sendto(MESSAGE, (UDP_IP, UDP_PORT))

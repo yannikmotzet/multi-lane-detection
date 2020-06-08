@@ -11,7 +11,7 @@ import time
 
 __author__ = 'Yannik Motzet'
 __copyright__ = 'Copyright 2020, ZF-DHBW Innovation Lab'
-__version__ = '0.9.9'
+__version__ = '1.0.0'
 __email__ = 'yannik.motzet@outlook.com'
 __status__ = 'in development'
 

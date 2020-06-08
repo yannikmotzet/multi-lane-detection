@@ -21,7 +21,7 @@ UDP_PORT = 10002
 # Initialisierung des Reglers - Initialization of the controller
 class P_Controller:
     def init_controller(self):		
-            self.Kp = 10
+            self.Kp = 4
             # self.offset = 0.0
             self.L_wheelbase = 325          # [mm]
             self.g_acceleration = 9.81      # [m/s^2] - acceleration of gravity
@@ -69,15 +69,22 @@ def callback(data):
 
     # UDP Message
     ####################################
-    # build content for UDP message
-    message = "STEER,1," + str(steering_angle)
-    message_udp = str.encode(message)
+    # build content for STEER UDP message (STEER,1,steering angle,) 
+    # steering angle = 100 correspond to 30 degrees in truck
+    message = "STEER,1," + str(steering_angle) + ","
+    message_udp_steer = str.encode(message)
+    
+    # build content for SPEED UDP message (SPEED,1,velocity,acceleration,)
+    default_speed = 25
+    message_udp_speed = str.encode("SPEED,1," + str(default_speed)+",50,")
+
 
     # create socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     
     # send UDP message
-    sock.sendto(message_udp, (UDP_IP, UDP_PORT))
+    sock.sendto(message_udp_steer, (UDP_IP, UDP_PORT))
+    sock.sendto(message_udp_speed, (UDP_IP, UDP_PORT))
     
     
 def listener():
