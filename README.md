@@ -7,7 +7,7 @@
 ## Getting started
 ### How to clone
 * clone repository to your ROS workspace: ``` ~/catkin_ws/scr$: git clone https://gitlab.com/zfinnolab/laneregression/laneregression ```
-* clone Lane Detection repo (yannik branch!) to your ROS workspace: ```~/catkin_ws/scr$: git clone https://gitlab.com/zfinnolab/lane-detection-assist/detectionlane.git```
+* clone Lane Detection repo to your ROS workspace (check for requirements!): ```~/catkin_ws/scr$: git clone https://gitlab.com/zfinnolab/lane-detection-assist/detectionlane.git```
 
 ### Requirements
 to get required python packages run: ```~/catkin_ws$: pip install -r requirements.txt ```
@@ -35,9 +35,11 @@ for each step open new terminal and first paste ``` source devel/setup.bash ``` 
 
 
 ## Other things
-### Get sample video of Truck Maker
-* [Spurerkennungssimulation.avi](https://drive.google.com/open?id=1Fd3jdyYO9kUJk1QslhRScMUqpeO-pjwe)
-* Save in: ``` ~/catkin_ws/scr/detection ```
+### Get sample videos
+* TruckMaker video: [Spurerkennungssimulation.avi](https://drive.google.com/open?id=1Fd3jdyYO9kUJk1QslhRScMUqpeO-pjwe)
+* Lab video: [capture_webcam_lab.avi](https://drive.google.com/file/d/1PhBOzQwyuuEcxeehWBJXEhRqIL0cKGOF/view?usp=sharing)
+
+Save in: ``` ~/catkin_ws/scr/detection ```
 
 ### How to: IPGMovie --> webcam
 * use Capture Card (Mira Box)
