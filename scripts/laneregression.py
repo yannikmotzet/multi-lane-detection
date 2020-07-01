@@ -16,13 +16,13 @@ __email__ = 'yannik.motzet@outlook.com'
 __status__ = 'in development'
 
 
-# picture resoultion
-# PICTURE_HEIGHT = 960
-PICTURE_HEIGHT = rospy.get_param("/PICTURE_HEIGHT")
+# picture resoultion (check yaml file that correct values are choosen)
+PICTURE_HEIGHT = 960
+# PICTURE_HEIGHT = rospy.get_param("/PICTURE_HEIGHT")
 PICTURE_WIDTH = rospy.get_param("/PICTURE_WIDTH")
 # width of track
-# TRACK_WIDTH = 143
-TRACK_WIDTH = rospy.get_param("/TRACK_WIDTH")
+TRACK_WIDTH = 143
+# TRACK_WIDTH = rospy.get_param("/TRACK_WIDTH")
 # degree for polynomial regression
 POLY_DEGREE = rospy.get_param("/POLY_DEGREE")
 # reduce points of lanedetection with polydp (Douglas-Ramer)
@@ -39,7 +39,7 @@ ANGLE_DIFFERENCE = rospy.get_param("/ANGLE_DIFFERENCE")
 SEGMENT_X_DIFFERENCE = rospy.get_param("/SEGMENT_X_DIFFERENCE")
 # minimum distance function points should have after sorting
 SORT_POINT_DISTANCE = rospy.get_param("/SORT_POINT_DISTANCE")
-# display window
+# parameter if window with illustration should be displayed
 DISPLAY_CANVAS = rospy.get_param("/DISPLAY_CANVAS")
 # print execution time of different code blocks
 DISPLAY_TIME = rospy.get_param("/DISPLAY_TIME")
@@ -201,7 +201,7 @@ def cluster_lane_segments(cluster_with_points, cluster_start_end_points):
                 except:
                     has_intersection = False
 
-                # draw intersection
+                #  # draw intersection
                 # if DISPLAY_CANVAS:
                 #     r, g, b = random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
                 #     cv2.circle(CANVAS, (int(intersection_x), int(intersection_y)), 5, (r, g, b), -1)
@@ -218,7 +218,7 @@ def cluster_lane_segments(cluster_with_points, cluster_start_end_points):
                         rectangle_x4 = rectangle_x2
                         rectangle_y4 = rectangle_y3
 
-                        # draw rectangle
+                        # # draw rectangle
                         # if DISPLAY_CANVAS:
                         #     cv2.rectangle(CANVAS, (int(rectangle_x2), int(rectangle_y2)), (int(rectangle_x3), int(rectangle_y3)), (r, g, b), 1)
                         
@@ -240,7 +240,7 @@ def cluster_lane_segments(cluster_with_points, cluster_start_end_points):
                         rectangle_x4 = rectangle_x2
                         rectangle_y4 = rectangle_y3
 
-                        # draw rectangle
+                        # # draw rectangle
                         # if DISPLAY_CANVAS:
                         #     cv2.rectangle(CANVAS, (int(rectangle_x2), int(rectangle_y2)), (int(rectangle_x3), int(rectangle_y3)), (r, g, b), 1)
                         
@@ -495,7 +495,7 @@ def callback(data):
         cluster_with_points.append(points)
 
         # draw raw points
-        # if display_output:
+        # if DISPLAY_CANVAS:
         #     draw_circles(points)
 
     
@@ -530,10 +530,10 @@ def callback(data):
     if DISPLAY_TIME:
         print("time1 " + str(time3 - time2))
 
-    # # draw new cluster with solid lines + dashed lines on canvas
-    # if display_output:
-        # for u in range(int(len(cluster_with_solid_and_dashed_lines))):
-        #     draw_circles(cluster_with_solid_and_dashed_lines[u])
+    # draw new cluster with solid lines + dashed lines on canvas
+    if DISPLAY_CANVAS:
+        for u in range(int(len(cluster_with_solid_and_dashed_lines))):
+            draw_circles(cluster_with_solid_and_dashed_lines[u])
 
 
     # find function for each line
@@ -551,7 +551,7 @@ def callback(data):
             function_points = cluster_with_solid_and_dashed_lines[c].reshape(cluster_with_solid_and_dashed_lines[c].shape[0],1,2)
         
         # draw points 
-        # if display_output:
+        # if DISPLAY_CANVAS:
             # b, g, r = random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
             # cv2.drawContours(CANVAS, function_points, -1, (b, g, r), 5)
         
@@ -581,16 +581,12 @@ def callback(data):
 
         all_meta.append(cluster_meta_data[c])
 
-        # # draw function
-        # if display_output:
+        # # draw function (function will also be drawn in detect border lines)
+        # if DISPLAY_CANVAS:
         #     for i in range(-500, 1500, 2):
         #         x = np.polyval(function[0], i)
         #         y = np.polyval(function[1], i)
         #         cv2.circle(CANVAS, (int(x), int(y)), 1, (0, 255, 0), -1)
-
-        # draw position of truck
-        cv2.line(CANVAS, (int(PICTURE_WIDTH/2), PICTURE_HEIGHT),
-                 (int(PICTURE_WIDTH/2), PICTURE_HEIGHT - 20), (0, 0, 0), 5)
     
     time5 = time.time()
     if DISPLAY_TIME:
@@ -701,10 +697,13 @@ def callback(data):
             ideal_y_coefficient[0] = (right_border_line.d + left_border_line.d) / 2
             ideal_y_coefficient[1] = (right_border_line.e + left_border_line.e) / 2
             ideal_y_coefficient[2] = (right_border_line.f + left_border_line.f) / 2
+            
             for m in range(-250, 1500, 2):                             
                 x = np.polyval(ideal_x_coefficient, m)
                 y = np.polyval(ideal_y_coefficient, m)
-                cv2.circle(CANVAS, (int(x), int(y)), 1, (0, 0, 255), -1)
+                # draw ideal line
+                if DISPLAY_CANVAS:
+                    cv2.circle(CANVAS, (int(x), int(y)), 1, (0, 0, 255), -1)
 
             # determine offset
             #x(s) = as^2+bs+c
@@ -734,27 +733,33 @@ def callback(data):
         # only right line is in range
         elif (TRACK_WIDTH/2)*0.8 < abs(right_border_line.x_position - TRUCK_POS_X) < (TRACK_WIDTH/2)*1.2:
             offset = right_border_line.x_position - (int(TRACK_WIDTH/2)) - TRUCK_POS_X
-            cv2.line(CANVAS, (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT),
+            if DISPLAY_CANVAS:
+                cv2.line(CANVAS, (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT),
                     (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT - 20), (0, 0, 255), 5)
         # only left line is in range
         elif (TRACK_WIDTH/2)*0.8 < abs(left_border_line.x_position - TRUCK_POS_X) < (TRACK_WIDTH/2)*1.2:
-            offset = right_border_line.x_position - (int(TRACK_WIDTH/2)) - TRUCK_POS_X
-            cv2.line(CANVAS, (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT),
+            offset = TRUCK_POS_X - (left_border_line.x_position + (int(TRACK_WIDTH/2)))
+            if DISPLAY_CANVAS:
+                cv2.line(CANVAS, (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT),
                 (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT - 20), (0, 0, 255), 5)
-        # neither left nor right lane is in range -> orient on right lane
+        # neither left nor right lane is in range -> orient on next right lane
         else:
             offset = right_border_line.x_position - (int(TRACK_WIDTH/2)) - TRUCK_POS_X
-            cv2.line(CANVAS, (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT),
+            if DISPLAY_CANVAS:
+                cv2.line(CANVAS, (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT),
                 (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT - 20), (0, 0, 255), 5)
     
     elif right_border_line is not None:
         offset = right_border_line.x_position - (int(TRACK_WIDTH/2)) - TRUCK_POS_X
-        cv2.line(CANVAS, (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT),(int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT - 20), (0, 0, 255), 5)
+        if DISPLAY_CANVAS:
+            cv2.line(CANVAS, (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT),(int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT - 20), (0, 0, 255), 5)
     elif left_border_line is not None:
-        offset = left_border_line.x_position - (int(TRACK_WIDTH/2)) - TRUCK_POS_X
-        cv2.line(CANVAS, (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT),(int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT - 20), (0, 0, 255), 5)
+        offset = TRUCK_POS_X - (left_border_line.x_position + (int(TRACK_WIDTH/2)))
+        if DISPLAY_CANVAS:
+            cv2.line(CANVAS, (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT),(int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT - 20), (0, 0, 255), 5)
     else:
-        print("error: no border lines detected")
+        print("error: no lines detected")
+        offset = 0
     time7 = time.time()
     if DISPLAY_TIME:
         print("time3 " + str(time7 - time6))
@@ -781,12 +786,13 @@ def callback(data):
     #################################
     if DISPLAY_CANVAS:
         cv2.imshow("laneregression", CANVAS)
-        # cv2.imwrite('result.png', CANVAS)
+        cv2.imwrite('illustrate_segment_cluster.png', CANVAS)
         cv2.waitKey(1)
         # cv2.destroyAllWindows()
     time12 = time.time()
     if DISPLAY_TIME:
         print("time9 " + str(time12 - time1))
+    
 
 
 def listener():

@@ -4,6 +4,6 @@
 	<node name="laneregression" pkg="lane_keeping_assist" type="laneregression.py" 			output="screen" />
     	<node name="laneassist" pkg="lane_keeping_assist" type="laneassist.py" output="screen" />
 	<include file="$(find detection)/launch/detection_webcam.launch">
-		<rosparam command="load" file="$(find detection)/config/detection.yaml" />
+		<rosparam command="load" file="$(find detection)/config/detection_labor.yaml" />
 	</include>
 </launch>

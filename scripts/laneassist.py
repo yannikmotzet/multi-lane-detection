@@ -56,9 +56,10 @@ class P_Controller:
 def callback(data):
     # rospy.loginfo("offset: " + str(data.data))
 
+    # get offset value from message
     offset = data.data
 
-    # PID-Controller
+    # P-Controller
     ####################################
     controller = P_Controller()
     controller.init_controller()
@@ -89,11 +90,6 @@ def callback(data):
     
 def listener():
 
-    # In ROS, nodes are uniquely named. If two nodes with the same
-    # name are launched, the previous one is kicked off. The
-    # anonymous=True flag means that rospy will choose a unique
-    # name for our 'listener' node so that multiple listeners can
-    # run simultaneously.
     rospy.init_node('laneassist_dummy', anonymous=True)
 
     rospy.Subscriber("laneregression_offset", Float32, callback, queue_size=1)
@@ -102,4 +98,12 @@ def listener():
     rospy.spin()
 
 if __name__ == '__main__':
+    # initialize steering angle
+    message ="STEER,1," + str(0)+","
+
+    MESSAGE = str.encode(message)
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.sendto(MESSAGE, (UDP_IP, UDP_PORT))
+
     listener()

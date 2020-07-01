@@ -4,7 +4,7 @@ PICTURE_HEIGHT: 660
 PICTURE_WIDTH: 1280
 
 # width of track
-# TRACK_WIDTH = 143 # TruckMaker
+# TRACK_WIDTH = 143 # TruckMaker and lanedetection_dummy
 # TRACK_WIDTH: 100 # simulation video
 TRACK_WIDTH: 395 # real truck
 
