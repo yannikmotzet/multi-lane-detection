@@ -17,12 +17,11 @@ __status__ = 'in development'
 
 
 # picture resoultion (check yaml file that correct values are choosen)
-PICTURE_HEIGHT = 960
-# PICTURE_HEIGHT = rospy.get_param("/PICTURE_HEIGHT")
+# PICTURE_HEIGHT = 960
+PICTURE_HEIGHT = rospy.get_param("/PICTURE_HEIGHT")
 PICTURE_WIDTH = rospy.get_param("/PICTURE_WIDTH")
 # width of track
-TRACK_WIDTH = 143
-# TRACK_WIDTH = rospy.get_param("/TRACK_WIDTH")
+TRACK_WIDTH = rospy.get_param("/TRACK_WIDTH")
 # degree for polynomial regression
 POLY_DEGREE = rospy.get_param("/POLY_DEGREE")
 # reduce points of lanedetection with polydp (Douglas-Ramer)
@@ -469,6 +468,8 @@ def callback(data):
     all_functions = []
     all_meta = []
 
+    time_start = time.time()
+
     number_of_cluster = len(data.size)
 
     # write points of ROS message to list
@@ -505,9 +506,6 @@ def callback(data):
     time0 = time.time()
     cluster_start_end_points = determine_cluster_start_end_points(
         cluster_with_points, number_of_cluster)
-    time1 = time.time()
-    if DISPLAY_TIME:
-        print("time0 " + str(time1 - time0))
 
     # draw start and end point of each cluster
     if DISPLAY_CANVAS:
@@ -523,22 +521,21 @@ def callback(data):
     # find cluster with solid lines + dashed lines (line cluster)
     # cluster_with_solid_and_dashed_lines, cluster_meta_data = determine_cluster_with_solid_and_dashed_lines(
     #     cluster_with_points, cluster_start_end_points
-    time2 = time.time()
     cluster_with_solid_and_dashed_lines, cluster_meta_data = cluster_lane_segments(
         cluster_with_points, cluster_start_end_points)
-    time3 = time.time()
-    if DISPLAY_TIME:
-        print("time1 " + str(time3 - time2))
-
+   
     # draw new cluster with solid lines + dashed lines on canvas
     if DISPLAY_CANVAS:
         for u in range(int(len(cluster_with_solid_and_dashed_lines))):
             draw_circles(cluster_with_solid_and_dashed_lines[u])
 
+    if DISPLAY_TIME:
+        print("time0 " + str(time.time() - time0))
+
 
     # find function for each line
     ####################################################
-    time4 = time.time()
+    time1 = time.time()
     reduce_points = False
     for c in range(int(len(cluster_with_solid_and_dashed_lines))):
         # reduce points with polydp algorithm?
@@ -588,23 +585,25 @@ def callback(data):
         #         y = np.polyval(function[1], i)
         #         cv2.circle(CANVAS, (int(x), int(y)), 1, (0, 255, 0), -1)
     
-    time5 = time.time()
     if DISPLAY_TIME:
-        print("time2 " + str(time5 - time4))
+        print("time1" + str(time.time() - time1))
 
 
     # sort lines by position
     ####################################################
+    time2 = time.time()
     index_right, index_left, x_pos = get_order_of_lines(all_functions)
 
     # len(order_of_lines), len(meta), int(len(all_functions)/2) should be identical
     if len(all_meta) != int(len(all_functions)/2): print("warning: number of functions does not correspond to number of meta")
+
+    if DISPLAY_TIME:
+        print("time2" + str(time.time() - time2))
     
     
     # ROS message for storing line information
     # includes koefficents of functions (#x(s) = as^2+bs+c, #y(s) = ds^2+es+f), meta information and position
     ####################################################
-    time6 = time.time()
     function_array = functionArray()
     
     # left lines
@@ -651,6 +650,7 @@ def callback(data):
 
     # detect border lines
     #################################
+    time3 = time.time()
     for i in range(len(functions)):
 
         b, g, b = 255, 0, 0
@@ -672,6 +672,7 @@ def callback(data):
         y_coefficient[0] = functions[i].d
         y_coefficient[1] = functions[i].e
         y_coefficient[2] = functions[i].f
+
         
         if DISPLAY_CANVAS:
             for m in range(-250, 1500, 2):                             
@@ -679,11 +680,16 @@ def callback(data):
                 y = np.polyval(y_coefficient, m)
                 cv2.circle(CANVAS, (int(x), int(y)), 1, (b, g, b), -1)
 
+    if DISPLAY_TIME:
+        print("time3" + str(time.time() - time3))
+        
+
     
     # calculate ideal line and offset
-    #################################s[1, 0, k] = start_end_points[1, 0, i]
-                    # start_end_point
+    #################################
     global TRACK_WIDTH
+
+    time4 = time.time()
 
     if right_border_line is not None and left_border_line is not None:
 
@@ -760,10 +766,9 @@ def callback(data):
     else:
         print("error: no lines detected")
         offset = 0
-    time7 = time.time()
+    
     if DISPLAY_TIME:
-        print("time3 " + str(time7 - time6))
-
+        print("time4" + str(time.time() - time4))
 
     # draw position of truck + offset value
     #################################
@@ -775,11 +780,14 @@ def callback(data):
     
     # publish offset via ROS topic
     ################################
-    time8 = time.time()
+    time5 = time.time()
     talker(offset)
-    time9 = time.time()
     if DISPLAY_TIME:
-        print("time4 " + str(time9 - time8))
+        print("time5" + str(time.time() - time5))
+
+    
+    if DISPLAY_TIME:
+        print("time6 " + str(time.time() - time_start))
 
     
     # display canvas window
@@ -789,10 +797,6 @@ def callback(data):
         cv2.imwrite('illustrate_segment_cluster.png', CANVAS)
         cv2.waitKey(1)
         # cv2.destroyAllWindows()
-    time12 = time.time()
-    if DISPLAY_TIME:
-        print("time9 " + str(time12 - time1))
-    
 
 
 def listener():

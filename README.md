@@ -72,6 +72,10 @@ LaneAssist dummy subscriber:
 * subscribe to topic and parse information
 
 #### Result example
+
+* Result with TruckMaker Video: [Truck Maker Video](https://drive.google.com/file/d/1OpmWzEI51dMPiLksArHPZKhikhLMETpj/view?usp=sharing)
+* Result with TruckMaker closed loop (kp = -8 / 0,2 * EZ): [TruckMaker Simulation](https://drive.google.com/file/d/1B8HVc0WMbPo6F5z3lmFQWJMaFJr0GR1L/view?usp=sharing)
+
 Here is an example image of one frame.
 * black lines: raw cluster
 * blue points: start and end points of raw cluster 

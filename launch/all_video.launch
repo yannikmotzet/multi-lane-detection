@@ -5,10 +5,10 @@
     <node name="laneassist" pkg="lane_keeping_assist" type="laneassist.py" output="screen" />
 
     <node name="detection" pkg="detection" type="detection" output="screen">
-		<rosparam command="load" file="$(find detection)/config/detection_labor.yaml" />
+		<rosparam command="load" file="$(find detection)/config/detection.yaml" />
     </node>
 
     <include file="$(find video_stream_opencv)/launch/camera.launch">
-		<arg name="video_stream_provider" value="$(find detection)/vlc-record-2020-06-08-18h26m39s-v4l2____dev_video0-.avi" />
+		<arg name="video_stream_provider" value="$(find detection)/Spurerkennungssimulation.avi" />
     </include>
 </launch>

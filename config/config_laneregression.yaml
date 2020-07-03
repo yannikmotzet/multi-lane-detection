@@ -1,10 +1,10 @@
 # picture resoultion
-# PICTURE_HEIGHT = 960
-PICTURE_HEIGHT: 660
+# PICTURE_HEIGHT = 960 # for all_dev.launch
+PICTURE_HEIGHT: 660 # for all_camera.launch, all_video.launch
 PICTURE_WIDTH: 1280
 
 # width of track
-# TRACK_WIDTH = 143 # TruckMaker and lanedetection_dummy
+# TRACK_WIDTH: 143 # TruckMaker and lanedetection_dummy
 # TRACK_WIDTH: 100 # simulation video
 TRACK_WIDTH: 395 # real truck
 
