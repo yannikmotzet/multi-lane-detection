@@ -48,7 +48,7 @@ def callback(data):
     
     # send UDP message
     sock.sendto(message_udp_steer, (UDP_IP, UDP_PORT))
-    # sock.sendto(message_udp_speed, (UDP_IP, UDP_PORT))
+    sock.sendto(message_udp_speed, (UDP_IP, UDP_PORT))
     
     
 def listener():
