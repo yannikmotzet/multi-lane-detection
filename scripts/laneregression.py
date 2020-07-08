@@ -744,7 +744,7 @@ def callback(data):
                     (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT - 20), (0, 0, 255), 5)
         # only left line is in range
         elif (TRACK_WIDTH/2)*0.8 < abs(left_border_line.x_position - TRUCK_POS_X) < (TRACK_WIDTH/2)*1.2:
-            offset = TRUCK_POS_X - (left_border_line.x_position + (int(TRACK_WIDTH/2)))
+            offset = left_border_line.x_position + (int(TRACK_WIDTH/2)) - TRUCK_POS_X
             if DISPLAY_CANVAS:
                 cv2.line(CANVAS, (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT),
                 (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT - 20), (0, 0, 255), 5)
@@ -760,7 +760,7 @@ def callback(data):
         if DISPLAY_CANVAS:
             cv2.line(CANVAS, (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT),(int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT - 20), (0, 0, 255), 5)
     elif left_border_line is not None:
-        offset = TRUCK_POS_X - (left_border_line.x_position + (int(TRACK_WIDTH/2)))
+        offset = left_border_line.x_position + (int(TRACK_WIDTH/2)) - TRUCK_POS_X
         if DISPLAY_CANVAS:
             cv2.line(CANVAS, (int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT),(int(PICTURE_WIDTH/2) + offset, PICTURE_HEIGHT - 20), (0, 0, 255), 5)
     else:
@@ -769,6 +769,9 @@ def callback(data):
     
     if DISPLAY_TIME:
         print("time4" + str(time.time() - time4))
+
+    # # print track width
+    # print(right_border_line.x_position - left_border_line.x_position)
 
     # draw position of truck + offset value
     #################################

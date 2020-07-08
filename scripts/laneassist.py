@@ -28,6 +28,7 @@ def callback(data):
     # P-Controller
     ####################################
     Kp = -4
+
     steering_angle = Kp * offset
     # print(steering_angle)
 
@@ -36,7 +37,8 @@ def callback(data):
     ####################################
     # build content for STEER UDP message (STEER,1,steering angle,) 
     # steering angle = 100 correspond to 30 degrees in truck
-    message = "STEER,1," + str(int(steering_angle)) + ","
+    message = "STEER,1," + str(int(steering_angle)) + ",500"
+    print(message)
     message_udp_steer = str.encode(message)
     
     # build content for SPEED UDP message (SPEED,1,velocity,acceleration,)
@@ -46,7 +48,7 @@ def callback(data):
     # create socket
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     
-    # send UDP message
+    # # send UDP message
     sock.sendto(message_udp_steer, (UDP_IP, UDP_PORT))
     sock.sendto(message_udp_speed, (UDP_IP, UDP_PORT))
     
