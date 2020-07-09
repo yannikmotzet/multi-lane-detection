@@ -27,7 +27,7 @@ input for detection from camera:
 * ```~/catkin_ws/$: roslaunch lane_keeping_assist all_camera.launch ```
 
 #### start single nodes manually:
-* start roscore: ```~/catkin_ws/$: roscore ```
+* start roscore: ```~/catkin_ws/$: roscore ```  
 for each step open new terminal and first paste ``` source devel/setup.bash ``` in ``` /catkin_ws$ ```
 * dummy lanedetection: ``` ~/catkin_ws$: rosrun lane_keeping_assist lanedetection_dummy.py ``` 
 * ``` ~/catkin_ws$: rosrun lane_keeping_assist laneregression.py ```
@@ -53,23 +53,26 @@ with ```\tools\send_udp.py``` you can send a steering angle to TM (go sure that 
 ## How it works
 ### How LaneRegressions works (not updated yet)
 
-preliminary work:
-* in LaneDetection an algorithm for Persepctive Transformation was implemented (to get the top-down view)
+Lane Detection dummy:  
+(bevore Lane Detection wasn't finished a dummy Lane Detection was used for puublishing data)  
+* in the original Lane Detection software an algorithm for Persepctive Transformation was implemented (to get the top-down view)
 * the cluster points of a few frames were written to a file
+* a dummy publisher retrieve test points from the file and publishes successively the frames with the all clusterpoints on a topic
+* the actual reduction of points with cv2.polydp() (Ramer–Douglas–Peucker algorithm) was run in Lane Regression alfter cluster_lane_segments (this code part still exists in Lane Regression but is switched of)
 
-LaneDetection dummy publisher:
-* retrieve test points from the file and publishes successively the frames with the clusterpoints on a topic
-
-LaneRegression:
+Lane Regression:
 * subscribe to topic
 * look for related cluster (dashed line consists of several clusters)
-* for each line cluster run Ramer–Douglas–Peucker algorithm  (calculates less points)
 * order new points
 * calculate x(t) and y(t) functions (third degree polynomials)
-* build a message which contains information about functions and publish it on a topic
+* get order of functions and look for border lines
+* calculate ideal line and offset
+* publish offset on a topic
 
-LaneAssist dummy subscriber:
-* subscribe to topic and parse information
+Lane Assist:
+* subscribe to topic
+* with offset calculate steering angle
+* send a UDP message to Arduino with steering angle and speed
 
 #### Result example
 
