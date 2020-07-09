@@ -51,16 +51,16 @@ with ```\tools\send_udp.py``` you can send a steering angle to TM (go sure that 
 
 
 ## How it works
-### How LaneRegressions works (not updated yet)
+### How LaneRegressions works
 
-Lane Detection dummy:  
+####Lane Detection dummy:  
 (bevore Lane Detection wasn't finished a dummy Lane Detection was used for puublishing data)  
 * in the original Lane Detection software an algorithm for Persepctive Transformation was implemented (to get the top-down view)
 * the cluster points of a few frames were written to a file
 * a dummy publisher retrieve test points from the file and publishes successively the frames with the all clusterpoints on a topic
 * the actual reduction of points with cv2.polydp() (Ramer–Douglas–Peucker algorithm) was run in Lane Regression alfter cluster_lane_segments (this code part still exists in Lane Regression but is switched of)
 
-Lane Regression:
+####Lane Regression:
 * subscribe to topic
 * look for related cluster (dashed line consists of several clusters)
 * order new points
@@ -69,17 +69,17 @@ Lane Regression:
 * calculate ideal line and offset
 * publish offset on a topic
 
-Lane Assist:
+####Lane Assist:
 * subscribe to topic
 * with offset calculate steering angle
 * send a UDP message to Arduino with steering angle and speed
 
-#### Result example
+### Result example
 
 * Result with TruckMaker Video: [Truck Maker Video](https://drive.google.com/file/d/1OpmWzEI51dMPiLksArHPZKhikhLMETpj/view?usp=sharing)
 * Result with TruckMaker closed loop (kp = -8 / 0,2 * EZ): [TruckMaker Simulation](https://drive.google.com/file/d/1B8HVc0WMbPo6F5z3lmFQWJMaFJr0GR1L/view?usp=sharing)
 
-Here is an example image of one frame.
+Here is an example image of one frame (using Lane Detection dummy).
 * black lines: raw cluster
 * blue points: start and end points of raw cluster 
 * red points: points calculated by Ramer–Douglas–Peucker algorithm
