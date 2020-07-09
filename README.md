@@ -26,7 +26,7 @@ intput for Lane Detection from video:
 * check in launch file for correct video path
 * check for correct parameters in ```/config/config_laneregression.yaml ```
  
-input for detection from camera:
+input for Lane Detection from camera:
 * ```~/catkin_ws/$: roslaunch lane_keeping_assist all_camera.launch ```
 * check in launch file for correct config file (.yaml) of Lane Detection
 * check for correct parameters in ```/config/config_laneregression.yaml ```
@@ -39,7 +39,8 @@ development setup with Lane Detection dummy:
 #### start single nodes manually:
 * start roscore: ```~/catkin_ws/$: roscore ```  
 for each step open new terminal and first paste ``` source devel/setup.bash ``` in ``` /catkin_ws$ ```
-* dummy lanedetection: ``` ~/catkin_ws$: rosrun lane_keeping_assist lanedetection_dummy.py ``` 
+* dummy Lane Detection: ``` ~/catkin_ws$: rosrun lane_keeping_assist lanedetection_dummy.py ``` 
+* Lane Detection: ``` ~/catkin_ws$: rosrun detection detection ``` 
 * ``` ~/catkin_ws$: rosrun lane_keeping_assist laneregression.py ```
 * ``` ~/catkin_ws$: rosrun lane_keeping_assist laneassist.py ```
 
@@ -49,7 +50,7 @@ for each step open new terminal and first paste ``` source devel/setup.bash ``` 
 * TruckMaker video: [Spurerkennungssimulation.avi](https://drive.google.com/open?id=1Fd3jdyYO9kUJk1QslhRScMUqpeO-pjwe)
 * Lab video: [capture_webcam_lab.avi](https://drive.google.com/file/d/1PhBOzQwyuuEcxeehWBJXEhRqIL0cKGOF/view?usp=sharing)
 
-Save in: ``` ~/catkin_ws/scr/detection ```
+save in: ``` ~/catkin_ws/scr/detection ```
 
 ### How to: IPGMovie --> webcam
 * use Capture Card (Mira Box)
