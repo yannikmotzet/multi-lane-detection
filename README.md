@@ -65,7 +65,7 @@ with ```\tools\send_udp.py``` you can send a steering angle to TM (go sure that 
 ### How LaneRegressions works
 
 #### Lane Detection dummy:  
-(bevore Lane Detection wasn't finished a dummy Lane Detection was used for puublishing data)  
+(before Lane Detection wasn't finished a dummy Lane Detection was used for publishing data)  
 * in the original Lane Detection software an algorithm for Persepctive Transformation was implemented (to get the top-down view)
 * the cluster points of a few frames were written to a file
 * a dummy publisher retrieve test points from the file and publishes successively the frames with the all clusterpoints on a topic
@@ -87,8 +87,10 @@ with ```\tools\send_udp.py``` you can send a steering angle to TM (go sure that 
 
 ### Result example
 
+* project report (T3101) with videos: [.zip file](https://drive.google.com/file/d/11az0AuKW0skMgIrxj_l_elNm-yw6Uq8y/view?usp=sharing)
 * Result with TruckMaker Video: [Truck Maker Video](https://drive.google.com/file/d/1OpmWzEI51dMPiLksArHPZKhikhLMETpj/view?usp=sharing)
 * Result with TruckMaker closed loop (kp = -8 / 0,2 * EZ): [TruckMaker Simulation](https://drive.google.com/file/d/1B8HVc0WMbPo6F5z3lmFQWJMaFJr0GR1L/view?usp=sharing)
+* other videos and screen records can be found under ``` ~/Videos ``` on the Lane Regression Intel NUC
 
 Here is an example image of one frame (using Lane Detection dummy).
 * black lines: raw cluster
