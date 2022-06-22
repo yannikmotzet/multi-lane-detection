@@ -1,8 +1,10 @@
+(former student project)
 # Lane Regression/Assist 2020
 
 ### Components
-* Lane Regression (current editor: [Yannik Motzet (TIT17)](mailto:yannik.motzet@outlook.com))
-* Lane Assist (current editor: Inci Sahin)
+* Lane Detection (missing)
+* Lane Regression
+* Lane Assist
 
 ## Getting started
 ### How to clone
